@@ -580,7 +580,8 @@ nav,.btn,.who label{font-size:13px;letter-spacing:.14em;font-weight:500}
                 <option>Les Orres</option><option>Crévoux</option><option>Embrun</option><option>Savines-le-Lac</option><option>Vars ou Risoul</option><option>Autre</option>
               </select>
             </div>
-            <div class="field" id="field-date"><label for="f-date" id="l-date">Dates du séjour</label><input id="f-date" name="dates" placeholder="ex. du 14 au 21 février"></div>
+            <div class="field" id="field-date"><label for="f-date">Dates du séjour</label><input id="f-date" name="dates" data-cal="range" placeholder="Arrivée et départ"></div>
+            <div class="field" id="field-bien" hidden><label for="f-bien">Type de bien</label><input id="f-bien" name="bien" placeholder="ex. T3 de 60 m², 6 couchages"></div>
           </div>
           <div class="field"><label for="f-msg" id="l-msg">Ce dont vous avez besoin</label>
             <textarea id="f-msg" name="msg" placeholder="Courses à l'arrivée, skis pour 4, transfert depuis la gare…"></textarea></div>
@@ -700,6 +701,7 @@ header .wrap{flex-wrap:wrap}
 <section id="portal" hidden aria-live="polite"><div class="wrap" id="portal-body"></div></section>
 <div class="toast" id="toast" hidden></div>
 
+<script type="module" src="/src/datepicker.js"></script>
 <script type="module" src="/src/portal.js"></script>
 
 
@@ -717,16 +719,14 @@ header .wrap{flex-wrap:wrap}
   const form = document.getElementById('contact-form');
   const done = document.getElementById('done');
   const err = document.getElementById('f-err');
-  const lDate = document.getElementById('l-date');
-  const fDate = document.getElementById('f-date');
   const lMsg = document.getElementById('l-msg');
   const fMsg = document.getElementById('f-msg');
   const sub = document.getElementById('f-submit');
 
   function mode(){
     const owner = document.getElementById('who-p').checked;
-    lDate.textContent = owner ? 'Type de bien' : 'Dates du séjour';
-    fDate.placeholder = owner ? 'ex. T3 de 60 m², 6 couchages' : 'ex. du 14 au 21 février';
+    document.getElementById('field-date').hidden = owner;
+    document.getElementById('field-bien').hidden = !owner;
     lMsg.textContent = owner ? 'Votre projet' : 'Ce dont vous avez besoin';
     fMsg.placeholder = owner ? 'Je loue déjà sur Airbnb et cherche quelqu’un pour l’accueil et le ménage…' : 'Courses à l’arrivée, skis pour 4, transfert depuis la gare…';
     sub.textContent = owner ? 'Envoyer ma demande de visite' : 'Envoyer ma demande';
@@ -745,7 +745,7 @@ header .wrap{flex-wrap:wrap}
       'Nom : ' + name,
       'Contact : ' + reach,
       'Lieu : ' + d.get('zone'),
-      (owner ? 'Bien : ' : 'Dates : ') + ((d.get('dates')||'').trim() || '—'),
+      (owner ? 'Bien : ' : 'Dates : ') + (((owner ? d.get('bien') : d.get('dates'))||'').trim() || '—'),
       '',
       (d.get('msg')||'').trim() || '(pas de précision)'
     ];
@@ -753,7 +753,7 @@ header .wrap{flex-wrap:wrap}
     const title = document.getElementById('done-title'), note = document.getElementById('done-note');
     title.textContent = 'Envoi en cours…'; note.textContent = 'Votre message part vers la conciergerie.';
     form.hidden = true; done.hidden = false;
-    const send = window.altioraSendLead ? window.altioraSendLead({name, reach, kind: owner ? 'proprietaire' : 'voyageur', place: d.get('zone'), dates: (d.get('dates')||'').trim(), body: (d.get('msg')||'').trim()}) : Promise.reject(new Error('indisponible'));
+    const send = window.altioraSendLead ? window.altioraSendLead({name, reach, kind: owner ? 'proprietaire' : 'voyageur', place: d.get('zone'), dates: ((owner ? d.get('bien') : d.get('dates'))||'').trim(), body: (d.get('msg')||'').trim()}) : Promise.reject(new Error('indisponible'));
     send.then(() => {
       title.textContent = 'Votre message est bien arrivé.';
       note.textContent = 'Nous vous répondons personnellement, en général dans la journée.';
