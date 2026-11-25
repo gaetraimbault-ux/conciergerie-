@@ -31,7 +31,7 @@ Le service d'envoi de courriels inclus dans Supabase est limité à quelques mes
 2. Commande de build : `npm run build`, dossier publié : `dist`.
 3. Variables d'environnement (Supabase > Project Settings > API) :
    - `VITE_SUPABASE_URL`
-   - `VITE_SUPABASE_ANON_KEY` (la clé « anon », publique). Ne jamais utiliser la clé `service_role` ici.
+   - `VITE_SUPABASE_ANON_KEY` : la clé publique (« publishable », qui commence par `sb_publishable_`, ou l’ancienne clé « anon »). Ne jamais utiliser la clé `service_role` ici.
 
 ### Tester en local
 
