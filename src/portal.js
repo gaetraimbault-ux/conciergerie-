@@ -1,7 +1,8 @@
 // Espaces connectés : connexion par lien courriel, espace client, compte gérant et messagerie.
-import { supabase, configured } from './supabase.js';
+import { supabase, inviteClient, configured } from './supabase.js';
 import { renderAuth, AUTH_CSS } from './auth-ui.js';
-{ const c = document.createElement('style'); c.textContent = AUTH_CSS; document.head.appendChild(c); }
+import { loadSiteContent, renderSiteEditor, CMS_CSS } from './cms.js';
+{ const c = document.createElement('style'); c.textContent = AUTH_CSS + CMS_CSS; document.head.appendChild(c); }
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -46,6 +47,7 @@ async function render() {
   if (portal.hidden) return;
   if (!configured) { body.innerHTML = `<div class="login"><h2>Configuration manquante</h2><p>L’adresse et la clé Supabase ne sont pas renseignées (fichier .env ou variables de l’hébergeur).</p></div>`; return; }
   if (st.recovery && st.session) return renderAuth(body, supabase, { mode: 'reset', toast });
+  if (st.session?.user?.user_metadata?.needs_password) return renderAuth(body, supabase, { mode: 'reset', welcome: true, toast });
   if (!st.session) return renderLogin();
   if (!st.me) { await loadMe(); if (!st.me) { body.innerHTML = '<p class="empty">Création de votre espace…</p>'; setTimeout(async () => { await loadMe(); render(); }, 1500); return; } }
   subscribe();
@@ -115,7 +117,7 @@ async function renderClient() {
 }
 
 /* ---------- Compte gérant ---------- */
-const TABS = [['messagerie', 'Messagerie'], ['contacts', 'Contacts du site'], ['demandes', 'Demandes'], ['clients', 'Clients']];
+const TABS = [['messagerie', 'Messagerie'], ['contacts', 'Contacts du site'], ['demandes', 'Demandes'], ['clients', 'Comptes'], ['site', 'Textes du site']];
 
 async function renderGerant() {
   const me = st.me;
@@ -126,6 +128,7 @@ async function renderGerant() {
     supabase.from('requests').select('*').order('created_at', { ascending: false }),
     supabase.from('leads').select('*').order('created_at', { ascending: false }),
   ]);
+  const { data: invites = [] } = st.tab === 'clients' ? await supabase.from('invites').select('*').order('created_at', { ascending: false }) : { data: [] };
   const P = Object.fromEntries(profiles.map((p) => [p.id, p]));
   const names = Object.fromEntries(profiles.map((p) => [p.id, p.full_name || p.email]));
   const R = Object.fromEntries(reads.map((r) => [r.client_id, new Date(r.last_read_at).getTime()]));
@@ -154,8 +157,15 @@ async function renderGerant() {
     content = leads.length ? `<div class="list">${leads.map((l) => `<div class="item"><span class="t">${esc(l.name)} · ${esc(l.reach)}</span><span class="m">${fmtTime(l.created_at)} · ${l.kind === 'proprietaire' ? 'Propriétaire' : 'Voyageur'} · ${esc(l.place || '')}${l.dates ? ' · ' + esc(l.dates) : ''}<br>${esc(l.body || '(pas de précision)')}</span><span class="s">${l.handled ? '<span class="pill terminee">Traité</span>' : `<button class="btn" type="button" data-lead="${esc(l.id)}">Marquer traité</button>`}</span></div>`).join('')}</div>` : '<p class="empty">Aucun message reçu depuis le site.</p>';
   } else if (tab === 'demandes') {
     content = reqs.length ? `<div class="tbl-wrap"><table class="ptable"><thead><tr><th>Client</th><th>Service</th><th>Date</th><th>Statut</th></tr></thead><tbody>${reqs.map((r) => `<tr class="${r.status === 'nouvelle' ? 'is-new' : ''}"><td>${esc(names[r.client_id])}</td><td>${esc(r.service)}${r.detail ? `<div class="m">${esc(r.detail)}</div>` : ''}</td><td style="white-space:nowrap">${fmtDate(r.wanted_on)}</td><td><select aria-label="Statut" data-req="${esc(r.id)}">${Object.keys(STATUS).map((s) => `<option value="${s}" ${s === r.status ? 'selected' : ''}>${STATUS[s]}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Aucune demande.</p>';
+  } else if (tab === 'site') {
+    content = '<div id="cms-box"></div>';
   } else {
-    content = `<p class="who-is" style="margin-bottom:16px">Un compte est créé automatiquement quand quelqu’un se connecte pour la première fois. Complétez ici son séjour ou son bien.</p>
+    content = `<form class="newreq" id="inv" novalidate><h2>Créer un compte</h2><p class="m">La personne reçoit un courriel avec un lien qui ouvre son espace, puis elle choisit son mot de passe. Si l’adresse a déjà un compte, son rôle est simplement mis à jour.</p>
+      <div class="row"><div class="field"><label for="inv-n">Nom complet</label><input id="inv-n" autocomplete="off"></div><div class="field"><label for="inv-e">Adresse courriel</label><input id="inv-e" type="email" autocomplete="off"></div></div>
+      <div class="row"><div class="field"><label for="inv-r">Rôle</label><select id="inv-r"><option value="client">Client</option><option value="gerant">Gérant (accès complet)</option></select></div><div class="field"><label for="inv-k">Type de client</label><select id="inv-k"><option value="voyageur">Voyageur</option><option value="proprietaire">Propriétaire</option></select></div></div>
+      <p class="err" id="inv-err" hidden></p><button class="btn solid" type="submit">Créer le compte et envoyer l’invitation</button></form>
+    ${invites.length ? `<h2 style="margin:28px 0 10px">Invitations en attente</h2><div class="list">${invites.map((i) => `<div class="item"><span class="t">${esc(i.full_name || i.email)} · ${i.role === 'gerant' ? 'Gérant' : 'Client'}</span><span class="m">${esc(i.email)} · envoyée le ${fmtTime(i.created_at)}</span><span class="s"><button class="linkbtn" type="button" data-uninv="${esc(i.email)}">Annuler</button></span></div>`).join('')}</div>` : ''}
+    <h2 style="margin:28px 0 10px">Tous les comptes</h2><p class="who-is" style="margin-bottom:16px">Complétez ici le séjour ou le bien de chacun, ou changez son rôle.</p>
     <div class="tbl-wrap"><table class="ptable"><thead><tr><th>Nom</th><th>Type</th><th>Logement</th><th>Du</th><th>Au</th><th>Rôle</th><th></th></tr></thead><tbody>${profiles.map((p) => `<tr data-prof="${esc(p.id)}"><td>${esc(p.full_name || '')}<div class="m">${esc(p.email || '')}${p.phone ? '<br>' + esc(p.phone) : ''}${p.place ? '<br>' + esc(p.place) : ''}</div></td>
       <td><select data-f="kind"><option value="">—</option><option value="voyageur" ${p.kind === 'voyageur' ? 'selected' : ''}>Voyageur</option><option value="proprietaire" ${p.kind === 'proprietaire' ? 'selected' : ''}>Propriétaire</option></select></td>
       <td><input data-f="property" value="${esc(p.property || '')}" placeholder="Chalet…" style="width:100%;min-width:140px;padding:6px"></td>
@@ -169,6 +179,8 @@ async function renderGerant() {
   <div class="tabs" role="tablist">${TABS.map(([k, l]) => { const n = k === 'messagerie' ? nMsg : k === 'contacts' ? nLeads : k === 'demandes' ? nNew : 0; return `<button role="tab" type="button" aria-selected="${k === tab}" data-tab="${k}">${l}${n ? ` <span class="badge">${n}</span>` : ''}</button>`; }).join('')}</div>${content}`;
   scrollThread();
 
+  const cmsBox = $('cms-box');
+  if (cmsBox) { const o = { supabase, toast, me, rerender: () => renderSiteEditor(cmsBox, o) }; renderSiteEditor(cmsBox, o); }
   $('logout').onclick = logout;
   body.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { st.tab = b.dataset.tab; render(); }));
   body.querySelectorAll('[data-convo]').forEach((b) => (b.onclick = () => { st.convo = b.dataset.convo; render(); }));
@@ -182,6 +194,29 @@ async function renderGerant() {
   });
   body.querySelectorAll('[data-lead]').forEach((b) => (b.onclick = async () => { await supabase.from('leads').update({ handled: true }).eq('id', b.dataset.lead); render(); }));
   body.querySelectorAll('[data-req]').forEach((s) => (s.onchange = async () => { const { error } = await supabase.from('requests').update({ status: s.value }).eq('id', s.dataset.req); toast(error ? 'Erreur : ' + error.message : 'Statut : ' + STATUS[s.value]); render(); }));
+  const inv = $('inv');
+  if (inv) inv.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const err = (m) => { $('inv-err').textContent = m; $('inv-err').hidden = false; };
+    const full_name = $('inv-n').value.trim(), email = $('inv-e').value.trim().toLowerCase(), role = $('inv-r').value, kind = $('inv-k').value;
+    if (!full_name) return err('Indiquez le nom de la personne.');
+    if (!/^\S+@\S+\.\S+$/.test(email)) return err('Indiquez une adresse courriel valide.');
+    const btn = inv.querySelector('button[type=submit]'); btn.disabled = true;
+    const exist = profiles.find((p) => (p.email || '').toLowerCase() === email);
+    if (exist) {
+      const { error } = await supabase.from('profiles').update({ role, kind: role === 'client' ? kind : exist.kind }).eq('id', exist.id);
+      btn.disabled = false;
+      if (error) return err('Mise à jour impossible : ' + error.message);
+      toast(`${exist.full_name || email} avait déjà un compte : il est maintenant ${role === 'gerant' ? 'gérant' : 'client'}.`); return render();
+    }
+    const { error: e1 } = await supabase.from('invites').upsert({ email, role, full_name, kind: role === 'client' ? kind : null, invited_by: me.id });
+    if (e1) { btn.disabled = false; return err('Invitation impossible : ' + e1.message); }
+    const { error: e2 } = await inviteClient.auth.signInWithOtp({ email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname + '#connexion', data: { full_name, kind: role === 'client' ? kind : null, needs_password: true } } });
+    btn.disabled = false;
+    if (e2) { await supabase.from('invites').delete().eq('email', email); return err(/rate|limit/i.test(e2.message) ? 'Trop de courriels envoyés en peu de temps. Réessayez dans une heure.' : 'Courriel non envoyé : ' + e2.message); }
+    toast(`Invitation envoyée à ${email}`); render();
+  });
+  body.querySelectorAll('[data-uninv]').forEach((b) => (b.onclick = async () => { await supabase.from('invites').delete().eq('email', b.dataset.uninv); toast('Invitation annulée'); render(); }));
   body.querySelectorAll('[data-save]').forEach((b) => (b.onclick = async () => {
     const row = body.querySelector(`[data-prof="${CSS.escape(b.dataset.save)}"]`), v = {};
     row.querySelectorAll('[data-f]').forEach((i) => { if (!i.disabled) v[i.dataset.f] = i.value || null; });
@@ -193,9 +228,10 @@ async function renderGerant() {
 
 /* ---------- Démarrage ---------- */
 if (configured) {
+  loadSiteContent(supabase);
   supabase.auth.onAuthStateChange(async (event, session) => {
     if (event === 'PASSWORD_RECOVERY') { st.recovery = true; st.session = session; history.replaceState(null, '', '#connexion'); route(); return; }
-    if (event === 'USER_UPDATED' && st.recovery) { st.recovery = false; render(); }
+    if (event === 'USER_UPDATED') { st.recovery = false; st.session = session; render(); return; }
     const changed = (session?.user?.id || null) !== (st.session?.user?.id || null);
     st.session = session;
     if (changed) { st.me = null; if (st.channel) { supabase.removeChannel(st.channel); st.channel = null; } if (session && !PORTAL.includes(location.hash.slice(1))) history.replaceState(null, '', '#connexion'); route(); }

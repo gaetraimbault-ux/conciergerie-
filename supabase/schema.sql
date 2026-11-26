@@ -18,26 +18,40 @@ create table if not exists public.profiles (
 alter table public.profiles add column if not exists phone text;
 alter table public.profiles add column if not exists place text;
 
--- Création automatique du profil à l'inscription (le rôle reste toujours « client »)
+-- Invitations envoyées par un gérant depuis son espace (le rôle prévu est appliqué à la création du compte)
+create table if not exists public.invites (
+  email text primary key check (email = lower(email)),
+  role text not null default 'client' check (role in ('client','gerant')),
+  full_name text,
+  kind text check (kind in ('voyageur','proprietaire')),
+  invited_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+-- Création automatique du profil à l'inscription (rôle « client », sauf invitation d'un gérant)
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
   m jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
   k text := m->>'kind';
   d1 date; d2 date;
+  inv public.invites%rowtype;
 begin
+  select * into inv from public.invites where email = lower(new.email);
   begin d1 := nullif(m->>'stay_from','')::date; exception when others then d1 := null; end;
   begin d2 := nullif(m->>'stay_to','')::date; exception when others then d2 := null; end;
-  insert into public.profiles (id, email, full_name, phone, kind, place, property, stay_from, stay_to)
+  insert into public.profiles (id, email, full_name, role, phone, kind, place, property, stay_from, stay_to)
   values (
     new.id, new.email,
-    left(coalesce(nullif(m->>'full_name',''), split_part(new.email,'@',1)), 200),
+    left(coalesce(nullif(m->>'full_name',''), inv.full_name, split_part(new.email,'@',1)), 200),
+    coalesce(inv.role, 'client'),
     left(nullif(m->>'phone',''), 40),
-    case when k in ('voyageur','proprietaire') then k end,
+    coalesce(case when k in ('voyageur','proprietaire') then k end, inv.kind),
     left(nullif(m->>'place',''), 100),
     left(nullif(m->>'property',''), 200),
     d1, d2)
   on conflict (id) do nothing;
+  delete from public.invites where email = lower(new.email);
   return new;
 end $$;
 drop trigger if exists on_auth_user_created on auth.users;
@@ -92,12 +106,22 @@ create table if not exists public.leads (
   created_at timestamptz not null default now()
 );
 
+-- 5. Textes du site modifiés par les gérants (prix, coordonnées…) ; seuls les textes changés sont stockés
+create table if not exists public.site_content (
+  key text primary key check (length(key) between 1 and 80),
+  html text not null check (length(html) <= 8000),
+  updated_by uuid references public.profiles(id) on delete set null,
+  updated_at timestamptz not null default now()
+);
+
 -- Sécurité : chaque table est fermée par défaut, puis ouverte règle par règle
 alter table public.profiles enable row level security;
 alter table public.messages enable row level security;
 alter table public.message_reads enable row level security;
 alter table public.requests enable row level security;
 alter table public.leads enable row level security;
+alter table public.invites enable row level security;
+alter table public.site_content enable row level security;
 
 -- Profils : chacun voit le sien, les gérants voient et modifient tout
 drop policy if exists "profil lu" on public.profiles;
@@ -135,6 +159,16 @@ create policy "contact lu" on public.leads for select using (public.is_gerant())
 drop policy if exists "contact traité" on public.leads;
 create policy "contact traité" on public.leads for update using (public.is_gerant());
 
+-- Invitations : réservées aux gérants
+drop policy if exists "invitations gérants" on public.invites;
+create policy "invitations gérants" on public.invites for all using (public.is_gerant()) with check (public.is_gerant());
+
+-- Textes du site : lus par tout le monde, modifiés par les gérants
+drop policy if exists "textes lus" on public.site_content;
+create policy "textes lus" on public.site_content for select to anon, authenticated using (true);
+drop policy if exists "textes modifiés" on public.site_content;
+create policy "textes modifiés" on public.site_content for all to authenticated using (public.is_gerant()) with check (public.is_gerant());
+
 -- Temps réel : les nouveaux messages s'affichent sans recharger
 do $$ begin
   alter publication supabase_realtime add table public.messages;
@@ -152,8 +186,11 @@ grant select, insert on public.messages to authenticated;
 grant select, insert, update on public.message_reads to authenticated;
 grant select, insert, update on public.requests to authenticated;
 grant select, insert, update on public.leads to authenticated;
+grant select, insert, update, delete on public.invites to authenticated;
+grant select on public.site_content to anon;
+grant select, insert, update, delete on public.site_content to authenticated;
 grant usage on all sequences in schema public to anon, authenticated;
 grant execute on function public.is_gerant() to anon, authenticated;
 
--- 5. Donner le rôle gérant (à lancer après ta première connexion, avec ton adresse) :
+-- 6. Donner le rôle gérant (à lancer après ta première connexion, avec ton adresse) :
 -- update public.profiles set role = 'gerant' where email = 'ton-adresse@exemple.fr';

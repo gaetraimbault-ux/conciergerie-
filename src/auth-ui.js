@@ -27,7 +27,8 @@ export const AUTH_CSS = `
 @media (max-width:560px){.auth form{padding:22px}.auth .row{grid-template-columns:1fr}}
 `;
 
-export function renderAuth(body, supabase, { mode = 'login', toast } = {}) {
+export function renderAuth(body, supabase, opts = {}) {
+  const { mode = 'login', toast } = opts;
   const tabs = `<div class="auth-tabs" role="tablist">
       <button type="button" role="tab" data-mode="login" aria-selected="${mode === 'login'}">Se connecter</button>
       <button type="button" role="tab" data-mode="signup" aria-selected="${mode === 'signup'}">Créer un compte</button></div>`;
@@ -66,7 +67,7 @@ export function renderAuth(body, supabase, { mode = 'login', toast } = {}) {
       <p class="err" id="fg-err" hidden></p><button class="btn solid" type="submit">Envoyer le lien</button>
       <button class="linkbtn" type="button" data-mode="login">Retour à la connexion</button></form>`;
   } else if (mode === 'reset') {
-    form = `<form id="au-reset" novalidate><h2>Nouveau mot de passe</h2>
+    form = `<form id="au-reset" novalidate><h2>${opts.welcome ? 'Choisissez votre mot de passe' : 'Nouveau mot de passe'}</h2>${opts.welcome ? '<p class="lead">Votre compte a été créé par la conciergerie. Choisissez un mot de passe pour vous connecter les prochaines fois.</p>' : ''}
       <div class="field"><label for="rs-p">Nouveau mot de passe</label><input id="rs-p" type="password" autocomplete="new-password"></div>
       <div class="field"><label for="rs-p2">Confirmer</label><input id="rs-p2" type="password" autocomplete="new-password"></div>
       <p class="err" id="rs-err" hidden></p><button class="btn solid" type="submit">Enregistrer</button></form>`;
@@ -142,7 +143,7 @@ export function renderAuth(body, supabase, { mode = 'login', toast } = {}) {
       const p = $('rs-p').value, p2 = $('rs-p2').value;
       if (p.length < 8) return fail('rs-err', 'Au moins 8 caractères.');
       if (p !== p2) return fail('rs-err', 'Les deux mots de passe ne sont pas identiques.');
-      const { error } = await supabase.auth.updateUser({ password: p });
+      const { error } = await supabase.auth.updateUser({ password: p, data: { needs_password: false } });
       if (error) return fail('rs-err', 'Enregistrement impossible : ' + error.message);
       toast && toast('Mot de passe enregistré');
       location.hash = 'connexion'; window.dispatchEvent(new HashChangeEvent('hashchange'));
