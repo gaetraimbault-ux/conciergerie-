@@ -1,5 +1,7 @@
 // Espaces connectés : connexion par lien courriel, espace client, compte gérant et messagerie.
 import { supabase, configured } from './supabase.js';
+import { renderAuth, AUTH_CSS } from './auth-ui.js';
+{ const c = document.createElement('style'); c.textContent = AUTH_CSS; document.head.appendChild(c); }
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -12,9 +14,9 @@ const SERVICES_P = ['Ménage de fin de séjour', 'Linge de lit et de toilette', 
 
 const main = $('top'), portal = $('portal'), body = $('portal-body'), toastEl = $('toast');
 let tt; const toast = (m) => { toastEl.textContent = m; toastEl.hidden = false; clearTimeout(tt); tt = setTimeout(() => (toastEl.hidden = true), 2800); };
-const PORTAL = ['connexion', 'espace-client', 'espace-gerant'];
+const PORTAL = ['connexion', 'inscription', 'espace-client', 'espace-gerant'];
 
-const st = { session: null, me: null, tab: 'messagerie', convo: null, data: {}, channel: null };
+const st = { recovery: false, session: null, me: null, tab: 'messagerie', convo: null, data: {}, channel: null };
 
 /* ---------- Formulaire de contact public ---------- */
 window.altioraSendLead = async (lead) => {
@@ -27,7 +29,7 @@ window.altioraSendLead = async (lead) => {
 function route() {
   const h = location.hash.slice(1);
   const on = PORTAL.includes(h);
-  document.querySelectorAll('.acc-links a').forEach((a) => (on ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
+  document.querySelectorAll('.acc-links a').forEach((a) => (on && a.getAttribute('href') === '#' + (h === 'inscription' ? 'inscription' : 'connexion') ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current')));
   if (!on) { portal.hidden = true; main.hidden = false; return; }
   main.hidden = true; portal.hidden = false; window.scrollTo(0, 0);
   render();
@@ -43,29 +45,16 @@ async function loadMe() {
 async function render() {
   if (portal.hidden) return;
   if (!configured) { body.innerHTML = `<div class="login"><h2>Configuration manquante</h2><p>L’adresse et la clé Supabase ne sont pas renseignées (fichier .env ou variables de l’hébergeur).</p></div>`; return; }
+  if (st.recovery && st.session) return renderAuth(body, supabase, { mode: 'reset', toast });
   if (!st.session) return renderLogin();
   if (!st.me) { await loadMe(); if (!st.me) { body.innerHTML = '<p class="empty">Création de votre espace…</p>'; setTimeout(async () => { await loadMe(); render(); }, 1500); return; } }
   subscribe();
   return st.me.role === 'gerant' ? renderGerant() : renderClient();
 }
 
-/* ---------- Connexion par lien magique ---------- */
+/* ---------- Connexion et création de compte ---------- */
 function renderLogin() {
-  body.innerHTML = `<div class="p-head"><div><p class="eyebrow">Connexion</p><h1>Bienvenue.</h1><p class="who-is">Clients et gérants se connectent ici. Chaque compte ouvre l’espace qui lui correspond.</p></div></div>
-  <form class="login" id="login" novalidate><h2>Se connecter</h2><p>Entrez votre adresse : vous recevez un lien de connexion par courriel, sans mot de passe.</p>
-  <div class="field"><label for="lg-n">Votre nom (première connexion)</label><input id="lg-n" autocomplete="name"></div>
-  <div class="field"><label for="lg-e">Adresse courriel</label><input id="lg-e" type="email" autocomplete="email" required></div>
-  <p class="err" id="lg-err" hidden></p>
-  <button class="btn solid" type="submit">Recevoir mon lien</button></form>`;
-  $('login').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const email = $('lg-e').value.trim(), name = $('lg-n').value.trim(), err = $('lg-err');
-    if (!/^\S+@\S+\.\S+$/.test(email)) { err.textContent = 'Indiquez une adresse courriel valide.'; err.hidden = false; return; }
-    err.hidden = true;
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname + '#connexion', data: name ? { full_name: name } : undefined } });
-    if (error) { err.textContent = 'Envoi impossible : ' + error.message; err.hidden = false; return; }
-    body.querySelector('#login').innerHTML = `<h2>Vérifiez votre boîte mail</h2><p>Un lien de connexion vient d’être envoyé à <b>${esc(email)}</b>. Ouvrez-le sur cet appareil pour accéder à votre espace.</p>`;
-  });
+  renderAuth(body, supabase, { mode: location.hash === '#inscription' ? 'signup' : 'login', toast });
 }
 
 async function logout() { await supabase.auth.signOut(); }
@@ -167,7 +156,7 @@ async function renderGerant() {
     content = reqs.length ? `<div class="tbl-wrap"><table class="ptable"><thead><tr><th>Client</th><th>Service</th><th>Date</th><th>Statut</th></tr></thead><tbody>${reqs.map((r) => `<tr class="${r.status === 'nouvelle' ? 'is-new' : ''}"><td>${esc(names[r.client_id])}</td><td>${esc(r.service)}${r.detail ? `<div class="m">${esc(r.detail)}</div>` : ''}</td><td style="white-space:nowrap">${fmtDate(r.wanted_on)}</td><td><select aria-label="Statut" data-req="${esc(r.id)}">${Object.keys(STATUS).map((s) => `<option value="${s}" ${s === r.status ? 'selected' : ''}>${STATUS[s]}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Aucune demande.</p>';
   } else {
     content = `<p class="who-is" style="margin-bottom:16px">Un compte est créé automatiquement quand quelqu’un se connecte pour la première fois. Complétez ici son séjour ou son bien.</p>
-    <div class="tbl-wrap"><table class="ptable"><thead><tr><th>Nom</th><th>Type</th><th>Logement</th><th>Du</th><th>Au</th><th>Rôle</th><th></th></tr></thead><tbody>${profiles.map((p) => `<tr data-prof="${esc(p.id)}"><td>${esc(p.full_name || '')}<div class="m">${esc(p.email || '')}</div></td>
+    <div class="tbl-wrap"><table class="ptable"><thead><tr><th>Nom</th><th>Type</th><th>Logement</th><th>Du</th><th>Au</th><th>Rôle</th><th></th></tr></thead><tbody>${profiles.map((p) => `<tr data-prof="${esc(p.id)}"><td>${esc(p.full_name || '')}<div class="m">${esc(p.email || '')}${p.phone ? '<br>' + esc(p.phone) : ''}${p.place ? '<br>' + esc(p.place) : ''}</div></td>
       <td><select data-f="kind"><option value="">—</option><option value="voyageur" ${p.kind === 'voyageur' ? 'selected' : ''}>Voyageur</option><option value="proprietaire" ${p.kind === 'proprietaire' ? 'selected' : ''}>Propriétaire</option></select></td>
       <td><input data-f="property" value="${esc(p.property || '')}" placeholder="Chalet…" style="width:100%;min-width:140px;padding:6px"></td>
       <td><input data-f="stay_from" type="date" value="${esc(p.stay_from || '')}" style="padding:6px"></td><td><input data-f="stay_to" type="date" value="${esc(p.stay_to || '')}" style="padding:6px"></td>
@@ -204,7 +193,9 @@ async function renderGerant() {
 
 /* ---------- Démarrage ---------- */
 if (configured) {
-  supabase.auth.onAuthStateChange(async (_e, session) => {
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') { st.recovery = true; st.session = session; history.replaceState(null, '', '#connexion'); route(); return; }
+    if (event === 'USER_UPDATED' && st.recovery) { st.recovery = false; render(); }
     const changed = (session?.user?.id || null) !== (st.session?.user?.id || null);
     st.session = session;
     if (changed) { st.me = null; if (st.channel) { supabase.removeChannel(st.channel); st.channel = null; } if (session && !PORTAL.includes(location.hash.slice(1))) history.replaceState(null, '', '#connexion'); route(); }

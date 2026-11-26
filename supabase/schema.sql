@@ -14,12 +14,29 @@ create table if not exists public.profiles (
   created_at timestamptz not null default now()
 );
 
--- Création automatique du profil à la première connexion
+-- Champs remplis à l'inscription
+alter table public.profiles add column if not exists phone text;
+alter table public.profiles add column if not exists place text;
+
+-- Création automatique du profil à l'inscription (le rôle reste toujours « client »)
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
+declare
+  m jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+  k text := m->>'kind';
+  d1 date; d2 date;
 begin
-  insert into public.profiles (id, email, full_name)
-  values (new.id, new.email, coalesce(new.raw_user_meta_data->>'full_name', split_part(new.email,'@',1)))
+  begin d1 := nullif(m->>'stay_from','')::date; exception when others then d1 := null; end;
+  begin d2 := nullif(m->>'stay_to','')::date; exception when others then d2 := null; end;
+  insert into public.profiles (id, email, full_name, phone, kind, place, property, stay_from, stay_to)
+  values (
+    new.id, new.email,
+    left(coalesce(nullif(m->>'full_name',''), split_part(new.email,'@',1)), 200),
+    left(nullif(m->>'phone',''), 40),
+    case when k in ('voyageur','proprietaire') then k end,
+    left(nullif(m->>'place',''), 100),
+    left(nullif(m->>'property',''), 200),
+    d1, d2)
   on conflict (id) do nothing;
   return new;
 end $$;
