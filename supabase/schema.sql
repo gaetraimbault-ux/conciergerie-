@@ -143,5 +143,17 @@ do $$ begin
   alter publication supabase_realtime add table public.leads;
 exception when duplicate_object then null; end $$;
 
+-- Droits d'accès aux tables (les projets Supabase récents n'en donnent aucun par défaut ;
+-- les règles RLS ci-dessus décident ensuite ligne par ligne)
+grant usage on schema public to anon, authenticated;
+grant insert on public.leads to anon;
+grant select, update on public.profiles to authenticated;
+grant select, insert on public.messages to authenticated;
+grant select, insert, update on public.message_reads to authenticated;
+grant select, insert, update on public.requests to authenticated;
+grant select, insert, update on public.leads to authenticated;
+grant usage on all sequences in schema public to anon, authenticated;
+grant execute on function public.is_gerant() to anon, authenticated;
+
 -- 5. Donner le rôle gérant (à lancer après ta première connexion, avec ton adresse) :
 -- update public.profiles set role = 'gerant' where email = 'ton-adresse@exemple.fr';
