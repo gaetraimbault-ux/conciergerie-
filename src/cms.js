@@ -39,7 +39,7 @@ export async function loadSiteContent(supabase) {
 }
 
 const KIND = { H1: 'Grand titre', H2: 'Titre', H3: 'Sous-titre', A: 'Lien ou bouton', LI: 'Ligne de liste', TD: 'Case du tableau', TH: 'En-tête du tableau', B: 'Information', STRONG: 'Montant', SPAN: 'Texte court', P: 'Texte', DT: 'Terme', DD: 'Définition' };
-const GROUP = { header: 'Menu du haut', hero: 'Accueil', seasons: 'Deux saisons', voyageurs: 'Voyageurs', proprietaires: 'Propriétaires (offres et tarifs)', territoire: 'Territoire', promise: 'Engagements', contact: 'Contact et coordonnées', footer: 'Pied de page' };
+const GROUP = { header: 'Menu du haut', hero: 'Accueil', seasons: 'Deux saisons', voyageurs: 'Voyageurs', proprietaires: 'Propriétaires (offres et tarifs)', territoire: 'Territoire', promise: 'Engagements', contact: 'Contact et coordonnées', footer: 'Pied de page', home: 'Accueil · portes d’entrée' };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 // Affiche le texte sans balises quand il n'en a pas besoin, pour une saisie simple.
 const toField = (html) => (/<[a-z]/i.test(html) ? html : new DOMParser().parseFromString(`<p>${html}</p>`, 'text/html').body.textContent);

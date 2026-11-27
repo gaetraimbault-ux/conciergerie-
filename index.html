@@ -432,6 +432,39 @@ header .acc-links a{color:inherit}
 main section,#portal{scroll-margin-top:84px}
 @media (max-width:760px){.hero-img{width:100%;object-position:62% center;-webkit-mask-image:none;mask-image:none}.scene{width:auto;aspect-ratio:16/9;left:auto;right:-34%}.hero::after{background:linear-gradient(180deg, rgba(14,18,26,.55) 0%, rgba(14,18,26,.35) 40%, rgba(14,18,26,.82) 100%)}.hero .eyebrow::before{display:none}.hero h1{font-size:clamp(40px,11vw,60px)}.hero-foot{font-size:10.5px;letter-spacing:.18em}.hero-foot p{max-width:60%}.seasons .wrap,.promise .wrap,section.block .wrap{padding-block:80px}.wood::before,.wood::after{display:none}}
 </style>
+<style id="pages">
+/* Pages et onglets : une page par sujet, l'accueil reste court */
+.doors .wrap{padding-block:110px 100px}
+.doors-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,64px)}
+.door{display:flex;flex-direction:column;gap:18px;text-decoration:none;color:inherit;border-top:1px solid var(--ink);padding-top:28px}
+.door h2{font-size:clamp(34px,4vw,52px);line-height:1.08}
+.door p:not(.eyebrow){color:var(--muted);max-width:44ch}
+.door .btn.line{align-self:flex-start;margin-top:6px;padding:6px 0 10px;border:0;border-bottom:1px solid currentColor}
+.door:hover .btn.line::after{width:40px}
+.doors-more{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:24px;margin-top:72px;padding-top:28px;border-top:1px solid var(--line)}
+@media (max-width:760px){.doors-grid{grid-template-columns:1fr}.doors .wrap{padding-block:72px}}
+body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-top:170px}
+.ptabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin:-12px 0 44px;overflow-x:auto;scrollbar-width:none}
+.ptabs button{background:none;border:0;border-bottom:1px solid transparent;margin-bottom:-1px;padding:14px 0;margin-right:clamp(22px,3vw,44px);font:500 15px var(--body);letter-spacing:.04em;color:var(--muted);cursor:pointer;white-space:nowrap}
+.ptabs button:hover{color:var(--ink)}
+.ptabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--sand-ink, var(--ember))}
+.ptab-panel .pack,.ptab-panel .carte,.ptab-panel .steps{margin-top:0}
+.foot-nav{display:flex;flex-wrap:wrap;gap:8px 22px}
+.foot-nav a{text-decoration:none;opacity:.85}
+.foot-nav a:hover{opacity:1;text-decoration:underline}
+@media (max-width:760px){
+  header .wrap{flex-wrap:wrap;row-gap:12px}
+  .navs{width:100%;order:3}
+  nav[aria-label="Navigation principale"]{width:100%;flex-wrap:nowrap;justify-content:space-between;gap:8px;font-size:13px;letter-spacing:.02em}
+  .draft{display:none}
+  nav[aria-label="Navigation principale"] a:not(.cta-nav){display:inline}
+  nav[aria-label="Navigation principale"] .cta-nav{padding:6px 10px;gap:8px}
+  nav[aria-label="Navigation principale"] .cta-nav::after{width:12px}
+  .hero-in{padding-top:170px !important}
+  body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-top:150px}
+}
+</style>
+
 </head>
 <body>
 <div class="draft"><div class="wrap">Version de travail · nom de marque provisoire, coordonnées et tarifs à valider</div></div>
@@ -455,7 +488,7 @@ main section,#portal{scroll-margin-top:84px}
 </header>
 
 <main id="top">
-  <section class="hero" aria-label="Accueil">
+  <section class="hero" aria-label="Accueil" data-page="home">
     <img class="hero-img" src="/hero.jpg" alt="Chalet en pierre et bois, terrasse éclairée et bassin, face au lac et aux montagnes à la tombée de la nuit" fetchpriority="high">
     <svg class="scene" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Un chalet éclairé au-dessus du lac de Serre-Ponçon, à la tombée de la nuit">
       <defs>
@@ -507,12 +540,12 @@ main section,#portal{scroll-margin-top:84px}
     </div>
     <div class="wrap hero-foot">
       <p data-k="hero-06">Embrun · Les Orres · Crévoux</p>
-      <a data-k="hero-07" class="scroll" href="#voyageurs">Défiler</a>
+      <a data-k="hero-07" class="scroll" href="#saisons">Défiler</a>
     </div>
   </section>
 
-  <div class="balcony" aria-hidden="true"></div>
-  <section class="seasons wood" aria-label="Deux saisons">
+  <div class="balcony" aria-hidden="true" data-page="home"></div>
+  <section class="seasons wood" id="saisons" aria-label="Deux saisons" data-page="home">
     <div class="wrap">
       <h2 data-k="seasons-01">Une maison ouverte <em>toute l'année.</em></h2>
       <div class="season">
@@ -528,7 +561,30 @@ main section,#portal{scroll-margin-top:84px}
     </div>
   </section>
 
-  <section class="block" id="voyageurs">
+  <section class="block doors" aria-label="Nos services" data-page="home">
+    <div class="wrap">
+      <div class="doors-grid">
+        <a class="door" href="#voyageurs">
+          <p data-k="home-01" class="eyebrow">Pour les voyageurs</p>
+          <h2 data-k="home-02">Arrivez, <em>tout est prêt.</em></h2>
+          <p data-k="home-03">Courses, skis et forfaits, transferts, chef à domicile : vous arrivez, le reste est réglé.</p>
+          <span data-k="home-04" class="btn line">Découvrir les services</span>
+        </a>
+        <a class="door" href="#proprietaires">
+          <p data-k="home-05" class="eyebrow">Pour les propriétaires</p>
+          <h2 data-k="home-06">Votre bien, <em>tenu comme un hôtel.</em></h2>
+          <p data-k="home-07">Accueil, ménage, linge et suivi : trois formules, ou des services à la carte.</p>
+          <span data-k="home-08" class="btn line">Voir les formules</span>
+        </a>
+      </div>
+      <div class="doors-more">
+        <a data-k="home-09" class="btn line" href="#territoire">Où intervenons-nous ?</a>
+        <a data-k="home-10" class="btn solid" href="#contact">Nous écrire</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="voyageurs" data-page="voyageurs">
     <div class="wrap">
       <div class="head">
         <div>
@@ -538,6 +594,8 @@ main section,#portal{scroll-margin-top:84px}
         <p data-k="voyageurs-03">Vous louez un logement dans la vallée ? Dites-nous ce qu'il vous faut, nous nous occupons du reste avec nos partenaires de la vallée : loueurs de ski, chefs, taxis, moniteurs.</p>
       </div>
 
+      <div class="ptabs" role="tablist"><button type="button" role="tab" data-ptab="vt-services" aria-selected="true" data-k="voyageurs-51">Nos services</button><button type="button" role="tab" data-ptab="vt-pack" aria-selected="false" data-k="voyageurs-52">Le Pack Arrivée</button></div>
+      <div class="ptab-panel" id="vt-services">
       <div class="services">
         <article class="svc">
           <h3 data-k="voyageurs-04">Le réfrigérateur rempli</h3>
@@ -571,6 +629,8 @@ main section,#portal{scroll-margin-top:84px}
         </article>
       </div>
 
+      </div>
+      <div class="ptab-panel" id="vt-pack" hidden>
       <div class="pack">
         <div>
           <p data-k="voyageurs-22" class="eyebrow">Le plus demandé</p>
@@ -584,10 +644,11 @@ main section,#portal{scroll-margin-top:84px}
         </div>
         <p data-k="voyageurs-28" class="amount"><span>À partir de</span>69 €</p>
       </div>
+      </div>
     </div>
   </section>
 
-  <section class="block owners" id="proprietaires">
+  <section class="block owners" id="proprietaires" data-page="proprietaires">
     <div class="wrap">
       <div class="head">
         <div>
@@ -597,6 +658,8 @@ main section,#portal{scroll-margin-top:84px}
         <p data-k="proprietaires-03">Vous louez votre appartement ou votre chalet en saison ? Nous accueillons vos voyageurs, préparons le logement entre deux séjours et veillons sur lui quand la station est fermée. Vous recevez un rapport photo après chaque passage.</p>
       </div>
 
+      <div class="ptabs" role="tablist"><button type="button" role="tab" data-ptab="pt-formules" aria-selected="true" data-k="proprietaires-51">Les formules</button><button type="button" role="tab" data-ptab="pt-carte" aria-selected="false" data-k="proprietaires-52">À la carte</button><button type="button" role="tab" data-ptab="pt-etapes" aria-selected="false" data-k="proprietaires-53">Comment ça se passe</button></div>
+      <div class="ptab-panel" id="pt-formules">
       <div class="plans">
         <article class="plan">
           <p data-k="proprietaires-04" class="tag">L'essentiel</p>
@@ -633,6 +696,8 @@ main section,#portal{scroll-margin-top:84px}
         </article>
       </div>
 
+      </div>
+      <div class="ptab-panel" id="pt-carte" hidden>
       <div class="carte">
         <div class="intro">
           <h3 data-k="proprietaires-25">À la carte</h3>
@@ -654,16 +719,19 @@ main section,#portal{scroll-margin-top:84px}
         </div>
       </div>
 
+      </div>
+      <div class="ptab-panel" id="pt-etapes" hidden>
       <div class="steps" aria-label="Comment nous commençons">
         <div class="step"><h4 data-k="proprietaires-43">Visite du bien</h4><p data-k="proprietaires-44">Nous venons voir le logement et écouter vos attentes.</p></div>
         <div class="step"><h4 data-k="proprietaires-45">Mise en service</h4><p data-k="proprietaires-46">Photos, inventaire, livret d'accueil, jeu de clés.</p></div>
         <div class="step"><h4 data-k="proprietaires-47">La saison</h4><p data-k="proprietaires-48">Accueil, ménage, linge et suivi à chaque rotation.</p></div>
         <div class="step"><h4 data-k="proprietaires-49">Le bilan</h4><p data-k="proprietaires-50">Relevé mensuel et visites de contrôle hors saison.</p></div>
       </div>
+      </div>
     </div>
   </section>
 
-  <section class="block" id="territoire">
+  <section class="block" id="territoire" data-page="territoire">
     <div class="wrap">
       <div class="head">
         <div>
@@ -681,8 +749,8 @@ main section,#portal{scroll-margin-top:84px}
     </div>
   </section>
 
-  <div class="balcony" aria-hidden="true"></div>
-  <section class="promise wood" aria-label="Nos engagements">
+  <div class="balcony" aria-hidden="true" data-page="home"></div>
+  <section class="promise wood" aria-label="Nos engagements" data-page="home">
     <div class="wrap">
       <p data-k="promise-01" class="big">Un seul interlocuteur, qui connaît votre logement et la vallée.</p>
       <div><h3 data-k="promise-02">Sur place</h3><p data-k="promise-03">Une équipe qui vit ici, pas un centre d'appels.</p></div>
@@ -692,7 +760,7 @@ main section,#portal{scroll-margin-top:84px}
     </div>
   </section>
 
-  <section class="block" id="contact">
+  <section class="block" id="contact" data-page="contact">
     <div class="wrap contact-grid">
       <aside>
         <p data-k="contact-01" class="eyebrow">Contact</p>
@@ -851,6 +919,7 @@ header .wrap{flex-wrap:wrap}
   <div class="wrap">
     <span data-k="footer-01" class="brand">Altiora</span>
     <span data-k="footer-02">Conciergerie privée · Embrun · Les Orres · Crévoux</span>
+    <div class="foot-nav"><a href="#top">Accueil</a><a href="#voyageurs">Voyageurs</a><a href="#proprietaires">Propriétaires</a><a href="#territoire">Territoire</a><a href="#contact">Contact</a></div>
     <span data-k="footer-03">Tarifs indicatifs, hors frais des partenaires</span>
   </div>
 </footer>
@@ -915,8 +984,29 @@ header .wrap{flex-wrap:wrap}
 
 <script>
 (function(){
+  const PAGES = ['voyageurs','proprietaires','territoire','contact'], SPACES = ['connexion','inscription','espace-client','espace-gerant'];
+  const main = document.getElementById('top');
+  function show(){
+    const h = location.hash.slice(1);
+    if (SPACES.includes(h)) return;
+    const page = PAGES.includes(h) ? h : 'home';
+    document.body.dataset.page = page;
+    main.querySelectorAll(':scope > [data-page]').forEach((el) => (el.hidden = el.dataset.page !== page));
+    document.querySelectorAll('header nav a').forEach((a) => (a.getAttribute('href') === '#' + page ? a.setAttribute('aria-current', 'page') : a.getAttribute('href') !== '#connexion' && a.getAttribute('href') !== '#inscription' && a.removeAttribute('aria-current')));
+    const target = page === 'home' && h && h !== 'top' ? document.getElementById(h) : null;
+    if (target) requestAnimationFrame(() => target.scrollIntoView()); else window.scrollTo(0, 0);
+  }
+  addEventListener('hashchange', show); show();
+  document.querySelectorAll('.ptabs').forEach((tl) => tl.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-ptab]'); if (!b) return;
+    tl.querySelectorAll('[data-ptab]').forEach((x) => { const on = x === b; x.setAttribute('aria-selected', on); document.getElementById(x.dataset.ptab).hidden = !on; });
+  }));
+})();
+</script>
+<script>
+(function(){
   const h=document.querySelector('header'), top=document.getElementById('top');
-  const upd=()=>{const on = top.hidden || window.scrollY > 40; h.classList.toggle('solid', on); document.body.classList.toggle('scrolled', on);};
+  const upd=()=>{const on = top.hidden || (document.body.dataset.page || 'home') !== 'home' || window.scrollY > 40; h.classList.toggle('solid', on); document.body.classList.toggle('scrolled', on);};
   addEventListener('scroll', upd, {passive:true}); addEventListener('hashchange', ()=>setTimeout(upd)); new MutationObserver(upd).observe(top,{attributes:true,attributeFilter:['hidden']}); upd();
 })();
 </script>
