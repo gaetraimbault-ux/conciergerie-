@@ -452,18 +452,76 @@ body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-
 .foot-nav{display:flex;flex-wrap:wrap;gap:8px 22px}
 .foot-nav a{text-decoration:none;opacity:.85}
 .foot-nav a:hover{opacity:1;text-decoration:underline}
-@media (max-width:760px){
-  header .wrap{flex-wrap:wrap;row-gap:12px}
-  .navs{width:100%;order:3}
-  nav[aria-label="Navigation principale"]{width:100%;flex-wrap:nowrap;justify-content:space-between;gap:8px;font-size:13px;letter-spacing:.02em}
+</style>
+<style id="appareils">
+/* Tous appareils : menu replié sous 1100 px, réglages pour écrans bas et très grands */
+.menu-btn{display:none}
+@media (max-width:1100px){
+  header .wrap{flex-wrap:nowrap;padding:14px clamp(16px,4vw,32px)}
+  header.solid .wrap{padding-block:10px}
+  .brand{position:relative;z-index:3}
+  .menu-btn{display:inline-flex;align-items:center;gap:12px;position:relative;z-index:3;background:none;border:1px solid currentColor;color:inherit;padding:10px 16px;font:500 13.5px var(--body);letter-spacing:.1em;text-transform:uppercase;cursor:pointer;min-height:44px}
+  .menu-btn i{width:20px;height:7px;border-top:1px solid currentColor;border-bottom:1px solid currentColor;transition:transform .25s,height .25s}
+  header.open .menu-btn i{height:0;border-bottom:0;transform:rotate(45deg)}
+  header .navs{position:fixed;inset:0;z-index:2;background:var(--night);color:#F3EEE6;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:34px;padding:110px clamp(24px,8vw,80px) 48px;opacity:0;visibility:hidden;transition:opacity .3s,visibility .3s;overflow-y:auto}
+  header.open .navs{opacity:1;visibility:visible}
+  header.open{color:#F3EEE6;background:transparent!important;backdrop-filter:none!important;border-bottom-color:transparent!important}
+  header .navs nav{display:flex!important;flex-direction:column;align-items:flex-start;gap:14px;width:auto;flex-wrap:nowrap}
+  header .navs nav[aria-label="Navigation principale"] a{display:block!important;font-family:var(--display);font-size:clamp(30px,7vw,46px);line-height:1.15;letter-spacing:0;opacity:1;text-transform:none;border:0}
+  header .navs nav[aria-label="Navigation principale"] a.cta-nav{display:inline-flex!important;font:500 15px var(--body);letter-spacing:.06em;border:1px solid currentColor;padding:14px 24px;margin-top:14px}
+  header .navs nav a[aria-current="page"]{color:var(--sand)}
+  header .navs .acc-links{display:flex!important;flex-direction:row;gap:28px;font-size:13px;opacity:.85;border-top:1px solid rgba(243,238,230,.2);padding-top:22px}
+  .hero-in{padding-top:clamp(110px,16vh,170px)!important}
+  body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-top:130px!important}
+  #portal{padding-top:84px}
+  header .navs .acc-links a{display:inline-block!important;font-size:14px;letter-spacing:.08em;text-transform:uppercase;padding:8px 0}
+  .ptabs button{margin-right:20px;font-size:14px}
   .draft{display:none}
-  nav[aria-label="Navigation principale"] a:not(.cta-nav){display:inline}
-  nav[aria-label="Navigation principale"] .cta-nav{padding:6px 10px;gap:8px}
-  nav[aria-label="Navigation principale"] .cta-nav::after{width:12px}
-  .hero-in{padding-top:170px !important}
-  body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-top:150px}
+}
+@media (max-width:1100px) and (max-height:500px){
+  .hero{min-height:auto}
+  .hero-in{padding-top:96px!important}
+  .hero h1{font-size:clamp(34px,6vw,52px)}
+  .hero .lede{font-size:16px;margin-top:14px;max-width:60ch}
+  .hero .actions{margin-top:22px}
+  .hero-foot{padding-top:28px!important;padding-bottom:16px!important}
+  header .navs{justify-content:flex-start;padding-top:84px;gap:20px}
+  header .navs nav[aria-label="Navigation principale"] a{font-size:28px}
+}
+@media (max-width:360px){
+  .brand{font-size:19px;letter-spacing:.16em}
+  .menu-btn{padding:8px 12px;gap:8px}
+  .hero h1{font-size:36px}
+  .hero .actions{flex-direction:column;align-items:flex-start;gap:18px}
+  .hero-foot p{display:none}
+}
+@media (min-width:1800px){
+  body{font-size:19px}
+  .wrap{max-width:1360px}
+  .hero-in,.hero-foot{max-width:none}
+  .hero h1{font-size:clamp(108px,5.8vw,156px)}
+  .hero .lede{font-size:21px}
+  nav{font-size:16px}
+  .head h2{font-size:clamp(64px,3.6vw,80px)}
+}
+
+/* espace client / gérant sur téléphone */
+@media (max-width:640px){
+  div.tabs{flex-wrap:wrap;overflow:visible;margin-bottom:28px}
+  div.tabs button{margin-right:18px;padding:10px 0;font-size:12px}
+  table.ptable{min-width:0;font-size:14.5px}
+  table.ptable thead{display:none}
+  table.ptable tr{display:block;padding:14px 0;border-bottom:1px solid var(--line)}
+  table.ptable td{display:block;position:relative;border:0;padding:4px 0 4px 92px;min-height:26px}
+  table.ptable td[data-label]::before{content:attr(data-label);position:absolute;left:0;top:7px;width:84px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  table.ptable td[data-label=""]{padding-left:0}
+  table.ptable td[data-label=""]::before{display:none}
+  table.ptable tr.is-new{box-shadow:inset 3px 0 0 var(--ember);padding-left:12px}
+  table.ptable tr.is-new td:first-child{box-shadow:none;padding-left:92px}
+  table.ptable select,table.ptable input{max-width:100%}
 }
 </style>
+
 
 </head>
 <body>
@@ -472,7 +530,8 @@ body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-
 <header>
   <div class="wrap">
     <a data-k="header-01" class="brand" href="#top">Altiora <small>Conciergerie</small></a>
-    <div class="navs">
+    <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu"><span>Menu</span><i aria-hidden="true"></i></button>
+    <div class="navs" id="menu">
     <nav aria-label="Navigation principale">
       <a data-k="header-02" href="#voyageurs">Voyageurs</a>
       <a data-k="header-03" href="#proprietaires">Propriétaires</a>
@@ -1008,6 +1067,26 @@ header .wrap{flex-wrap:wrap}
   const h=document.querySelector('header'), top=document.getElementById('top');
   const upd=()=>{const on = top.hidden || (document.body.dataset.page || 'home') !== 'home' || window.scrollY > 40; h.classList.toggle('solid', on); document.body.classList.toggle('scrolled', on);};
   addEventListener('scroll', upd, {passive:true}); addEventListener('hashchange', ()=>setTimeout(upd)); new MutationObserver(upd).observe(top,{attributes:true,attributeFilter:['hidden']}); upd();
+})();
+</script>
+<script>
+(function(){
+  const h = document.querySelector('header'), btn = h.querySelector('.menu-btn');
+  const set = (on) => { h.classList.toggle('open', on); btn.setAttribute('aria-expanded', on); btn.querySelector('span').textContent = on ? 'Fermer' : 'Menu'; document.documentElement.style.overflow = on ? 'hidden' : ''; };
+  btn.addEventListener('click', () => set(!h.classList.contains('open')));
+  h.querySelectorAll('.navs a').forEach((a) => a.addEventListener('click', () => set(false)));
+  addEventListener('keydown', (e) => { if (e.key === 'Escape' && h.classList.contains('open')) { set(false); btn.focus(); } });
+  addEventListener('resize', () => { if (innerWidth > 1100) set(false); });
+})();
+</script>
+
+<script>
+(function(){
+  function label(){document.querySelectorAll('table.ptable').forEach(function(t){
+    var h=[].map.call(t.querySelectorAll('thead th'),function(th){return th.textContent.trim()});
+    t.querySelectorAll('tbody tr').forEach(function(tr){[].forEach.call(tr.children,function(td,i){if(!td.hasAttribute('data-label'))td.setAttribute('data-label',h[i]||'')})});
+  })}
+  new MutationObserver(label).observe(document.body,{childList:true,subtree:true});label();
 })();
 </script>
 </body>
