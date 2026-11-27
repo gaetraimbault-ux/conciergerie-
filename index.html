@@ -423,10 +423,14 @@ section.block .wrap{padding-block:120px}
 .who{border-color:var(--ink)}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--sand)}
 
+.hero-img{position:absolute;top:0;right:0;bottom:0;left:auto;width:72%;height:100%;object-fit:cover;object-position:center;z-index:-2;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 34%);mask-image:linear-gradient(90deg,transparent 0,#000 34%)}
+.hero:has(.hero-img){background:linear-gradient(180deg,#3a4763 0%,#2a3550 38%,#1b2940 62%,#1a1f2b 100%)}
+header .acc-links a{color:inherit}
+.hero-img + .scene{display:none}
 /* Espaces clients et gérants : laisser la place à l'en-tête fixe */
 #portal{padding-top:110px}
 main section,#portal{scroll-margin-top:84px}
-@media (max-width:760px){.scene{width:auto;aspect-ratio:16/9;left:auto;right:-34%}.hero::after{background:linear-gradient(180deg, rgba(14,18,26,.55) 0%, rgba(14,18,26,.35) 40%, rgba(14,18,26,.82) 100%)}.hero .eyebrow::before{display:none}.hero h1{font-size:clamp(40px,11vw,60px)}.hero-foot{font-size:10.5px;letter-spacing:.18em}.hero-foot p{max-width:60%}.seasons .wrap,.promise .wrap,section.block .wrap{padding-block:80px}.wood::before,.wood::after{display:none}}
+@media (max-width:760px){.hero-img{width:100%;object-position:62% center;-webkit-mask-image:none;mask-image:none}.scene{width:auto;aspect-ratio:16/9;left:auto;right:-34%}.hero::after{background:linear-gradient(180deg, rgba(14,18,26,.55) 0%, rgba(14,18,26,.35) 40%, rgba(14,18,26,.82) 100%)}.hero .eyebrow::before{display:none}.hero h1{font-size:clamp(40px,11vw,60px)}.hero-foot{font-size:10.5px;letter-spacing:.18em}.hero-foot p{max-width:60%}.seasons .wrap,.promise .wrap,section.block .wrap{padding-block:80px}.wood::before,.wood::after{display:none}}
 </style>
 </head>
 <body>
@@ -452,6 +456,7 @@ main section,#portal{scroll-margin-top:84px}
 
 <main id="top">
   <section class="hero" aria-label="Accueil">
+    <img class="hero-img" src="/hero.jpg" alt="Chalet en pierre et bois, terrasse éclairée et bassin, face au lac et aux montagnes à la tombée de la nuit" fetchpriority="high">
     <svg class="scene" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Un chalet éclairé au-dessus du lac de Serre-Ponçon, à la tombée de la nuit">
       <defs>
         <linearGradient id="sc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#18202f"/><stop offset=".45" stop-color="#2f3a55"/><stop offset=".62" stop-color="#5a5f7a"/><stop offset=".7" stop-color="#a48586"/><stop offset=".74" stop-color="#c9a08a"/></linearGradient>
