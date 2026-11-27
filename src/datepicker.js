@@ -5,12 +5,18 @@
 (function () {
   if (window.__altioraCal) return; window.__altioraCal = true;
   const MOIS = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-  const JOURS = ['lu', 'ma', 'me', 'je', 've', 'sa', 'di'];
+  const JOURS_FR = ['lu', 'ma', 'me', 'je', 've', 'sa', 'di'];
+  const T = (s, v) => (window.altioraT ? window.altioraT(s, v) : s);
+  const LOC = () => (window.altioraLocale ? window.altioraLocale() : 'fr-FR');
+  const FRL = () => LOC() === 'fr-FR';
+  const monthName = (m) => (FRL() ? MOIS[m] : new Date(2024, m, 1).toLocaleDateString(LOC(), { month: 'long' }));
+  const jours = () => (FRL() ? JOURS_FR : [1, 2, 3, 4, 5, 6, 7].map((d) => new Date(2024, 0, d).toLocaleDateString(LOC(), { weekday: 'short' }).replace('.', '').slice(0, 2)));
   const pad = (n) => String(n).padStart(2, '0');
   const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const parse = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; };
-  const human = (s) => { const d = parse(s); return d ? d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }) : ''; };
+  const human = (s) => { const d = parse(s); return d ? d.toLocaleDateString(LOC(), { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' }) : ''; };
   const short = (s) => { const d = parse(s); return d ? `${d.getDate()} ${MOIS[d.getMonth()]}` : ''; };
+  const shortL = (s) => { const d = parse(s); return d ? (FRL() ? short(s) : d.toLocaleDateString(LOC(), { day: 'numeric', month: 'long' })) : ''; };
   const today = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
 
   const css = document.createElement('style');
@@ -49,7 +55,6 @@
     input.dataset.calDone = '1';
     const range = input.dataset.cal === 'range';
     const allowPast = input.hasAttribute('data-cal-past') || input.closest('.ptable');
-    const placeholder = input.getAttribute('placeholder') || (range ? 'Choisir les dates' : 'Choisir une date');
     const wrap = document.createElement('span'); wrap.className = 'cal-wrap';
     const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'cal-btn'; btn.setAttribute('aria-haspopup', 'dialog'); btn.setAttribute('aria-expanded', 'false');
     if (input.id) { btn.id = input.id + '-cal'; const lab = document.querySelector(`label[for="${CSS.escape(input.id)}"]`); if (lab) lab.htmlFor = btn.id; }
@@ -59,8 +64,9 @@
 
     const label = () => {
       let t = '';
-      if (range) { const f = input.dataset.from, to = input.dataset.to; t = f ? (to ? `Du ${short(f)} au ${short(to)}` : `Arrivée le ${short(f)}, choisir le départ`) : ''; }
+      if (range) { const f = input.dataset.from, to = input.dataset.to; t = f ? (to ? T('Du {a} au {b}', { a: shortL(f), b: shortL(to) }) : T('Arrivée le {a}, choisir le départ', { a: shortL(f) })) : ''; }
       else t = human(input.value);
+      const placeholder = input.getAttribute('placeholder') || T(range ? 'Choisir les dates' : 'Choisir une date');
       btn.innerHTML = `<span class="${t ? '' : 'ph'}">${t || placeholder}</span>${ICON}`;
     };
     const write = () => {
@@ -80,7 +86,7 @@
       if (open) open.close();
       const start = parse(range ? input.dataset.from : input.value) || today();
       let view = new Date(start.getFullYear(), start.getMonth(), 1);
-      const pop = document.createElement('div'); pop.className = 'cal-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', range ? 'Choisir les dates' : 'Choisir une date');
+      const pop = document.createElement('div'); pop.className = 'cal-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', T(range ? 'Choisir les dates' : 'Choisir une date'));
       wrap.appendChild(pop); btn.setAttribute('aria-expanded', 'true');
       const r = btn.getBoundingClientRect(); if (r.bottom + 360 > window.innerHeight && r.top > 380) pop.classList.add('up');
       const pr = pop.getBoundingClientRect(); if (pr.right > window.innerWidth - 16) pop.style.left = Math.min(0, window.innerWidth - 16 - pr.right) + 'px';
@@ -89,16 +95,16 @@
         const y = view.getFullYear(), m = view.getMonth(), min = allowPast ? null : today();
         const first = (new Date(y, m, 1).getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate();
         const f = range ? input.dataset.from : input.value, to = range ? input.dataset.to : '';
-        let cells = JOURS.map((j) => `<span class="dn">${j}</span>`).join('') + '<span></span>'.repeat(first);
+        let cells = jours().map((j) => `<span class="dn">${j}</span>`).join('') + '<span></span>'.repeat(first);
         for (let d = 1; d <= days; d++) {
           const s = iso(new Date(y, m, d)), dis = min && new Date(y, m, d) < min;
           const cls = ['cal-day', s === iso(today()) ? 'today' : '', !range && s === f ? 'sel' : '', range && (s === f || s === to) ? 'edge' : '', range && f && to && s > f && s < to ? 'in' : ''].join(' ');
           cells += `<button type="button" class="${cls}" data-d="${s}" ${dis ? 'disabled' : ''} aria-label="${human(s)}" ${(!range && s === f) || (range && (s === f || s === to)) ? 'aria-pressed="true"' : ''}>${d}</button>`;
         }
         const prevDis = min && new Date(y, m, 1) <= new Date(min.getFullYear(), min.getMonth(), 1);
-        const hint = range ? (!f || to ? 'Choisissez l’arrivée' : 'Choisissez le départ') : '';
-        pop.innerHTML = `<div class="cal-head"><button type="button" class="cal-nav" data-nav="-1" aria-label="Mois précédent" ${prevDis ? 'disabled' : ''}>‹</button><b>${MOIS[m]} ${y}</b><button type="button" class="cal-nav" data-nav="1" aria-label="Mois suivant">›</button></div>
-          <div class="cal-grid">${cells}</div><div class="cal-foot"><span>${hint}</span>${(range ? f : input.value) ? '<button type="button" data-clear>Effacer</button>' : ''}</div>`;
+        const hint = range ? T(!f || to ? 'Choisissez l’arrivée' : 'Choisissez le départ') : '';
+        pop.innerHTML = `<div class="cal-head"><button type="button" class="cal-nav" data-nav="-1" aria-label="${T('Mois précédent')}" ${prevDis ? 'disabled' : ''}>‹</button><b>${monthName(m)} ${y}</b><button type="button" class="cal-nav" data-nav="1" aria-label="${T('Mois suivant')}">›</button></div>
+          <div class="cal-grid">${cells}</div><div class="cal-foot"><span>${hint}</span>${(range ? f : input.value) ? `<button type="button" data-clear>${T('Effacer')}</button>` : ''}</div>`;
         const target = pop.querySelector(focusIso ? `[data-d="${focusIso}"]` : '[aria-pressed="true"]') || pop.querySelector('.cal-day:not(:disabled)');
         if (target) target.focus();
       }
@@ -133,4 +139,5 @@
   scan(document);
   new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) { if (n.matches?.('input[type="date"], input[data-cal="range"]')) enhance(n); scan(n); } }))).observe(document.documentElement, { childList: true, subtree: true });
   window.altioraCal = { enhance };
+  addEventListener('altiora-lang', () => document.querySelectorAll('input').forEach((i) => i.__calRefresh && i.__calRefresh()));
 })();

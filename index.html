@@ -467,8 +467,8 @@ body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-
   header.open .navs{opacity:1;visibility:visible}
   header.open{color:#F3EEE6;background:transparent!important;backdrop-filter:none!important;border-bottom-color:transparent!important}
   header .navs nav{display:flex!important;flex-direction:column;align-items:flex-start;gap:14px;width:auto;flex-wrap:nowrap}
-  header .navs nav[aria-label="Navigation principale"] a{display:block!important;font-family:var(--display);font-size:clamp(30px,7vw,46px);line-height:1.15;letter-spacing:0;opacity:1;text-transform:none;border:0}
-  header .navs nav[aria-label="Navigation principale"] a.cta-nav{display:inline-flex!important;font:500 15px var(--body);letter-spacing:.06em;border:1px solid currentColor;padding:14px 24px;margin-top:14px}
+  header .navs nav.main-nav a{display:block!important;font-family:var(--display);font-size:clamp(30px,7vw,46px);line-height:1.15;letter-spacing:0;opacity:1;text-transform:none;border:0}
+  header .navs nav.main-nav a.cta-nav{display:inline-flex!important;font:500 15px var(--body);letter-spacing:.06em;border:1px solid currentColor;padding:14px 24px;margin-top:14px}
   header .navs nav a[aria-current="page"]{color:var(--sand)}
   header .navs .acc-links{display:flex!important;flex-direction:row;gap:28px;font-size:13px;opacity:.85;border-top:1px solid rgba(243,238,230,.2);padding-top:22px}
   .hero-in{padding-top:clamp(110px,16vh,170px)!important}
@@ -486,7 +486,7 @@ body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-
   .hero .actions{margin-top:22px}
   .hero-foot{padding-top:28px!important;padding-bottom:16px!important}
   header .navs{justify-content:flex-start;padding-top:84px;gap:20px}
-  header .navs nav[aria-label="Navigation principale"] a{font-size:28px}
+  header .navs nav.main-nav a{font-size:28px}
 }
 @media (max-width:360px){
   .brand{font-size:19px;letter-spacing:.16em}
@@ -523,6 +523,23 @@ body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-
 </style>
 
 
+<script>
+(function(){var c=['en','it','es','de','nl'],l=new URLSearchParams(location.search).get('lang');
+try{l=l||localStorage.getItem('altiora-lang')}catch(e){}
+if(!l){var n=(navigator.languages||[navigator.language||'fr']);for(var i=0;i<n.length;i++){var x=String(n[i]).slice(0,2).toLowerCase();if(x==='fr'||c.indexOf(x)>-1){l=x;break}}}
+if(c.indexOf(l)>-1){document.documentElement.classList.add('i18n-wait');setTimeout(function(){document.documentElement.classList.remove('i18n-wait')},2500)}})();
+</script>
+<style>
+.i18n-wait body{visibility:hidden}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.lang{display:inline-flex;align-items:center}
+.lang-sel{appearance:none;-webkit-appearance:none;background:transparent;border:1px solid currentColor;color:inherit;font:500 12px var(--body,inherit);letter-spacing:.12em;padding:6px 22px 6px 10px;border-radius:0;cursor:pointer;opacity:.85;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 11px) 50%,calc(100% - 7px) 50%;background-size:4px 4px;background-repeat:no-repeat}
+.lang-sel option{color:#1C2320;background:#F3EEE6}
+header .navs .lang{margin-left:18px}
+.foot-lang{margin-top:4px}
+@media (min-width:1101px) and (max-width:1400px){header .wrap{gap:12px}header .navs{gap:18px}header nav{gap:18px;font-size:13.5px}header .acc-links{gap:12px}header .acc-links a{font-size:11.5px;letter-spacing:.08em}header .navs .lang{margin-left:4px}header nav a.cta-nav{white-space:nowrap}}
+@media (max-width:1100px){header .navs .lang{margin-left:0;margin-top:22px}header .navs .lang-sel{font-size:14px;padding:10px 30px 10px 14px}}
+</style>
 </head>
 <body>
 <div class="draft"><div class="wrap">Version de travail · nom de marque provisoire, coordonnées et tarifs à valider</div></div>
@@ -532,7 +549,7 @@ body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-
     <a data-k="header-01" class="brand" href="#top">Altiora <small>Conciergerie</small></a>
     <button class="menu-btn" type="button" aria-expanded="false" aria-controls="menu"><span>Menu</span><i aria-hidden="true"></i></button>
     <div class="navs" id="menu">
-    <nav aria-label="Navigation principale">
+    <nav class="main-nav" aria-label="Navigation principale">
       <a data-k="header-02" href="#voyageurs">Voyageurs</a>
       <a data-k="header-03" href="#proprietaires">Propriétaires</a>
       <a data-k="header-04" href="#territoire">Territoire</a>
@@ -542,6 +559,7 @@ body:not([data-page="home"]) main > section.block:not([hidden]) > .wrap{padding-
       <a data-k="header-06" href="#connexion">Se connecter</a>
       <a data-k="header-07" href="#inscription">Créer un compte</a>
     </nav>
+    <label class="lang"><span class="sr-only">Langue · Language</span><select class="lang-sel" aria-label="Langue · Language"><option value="fr" title="Français">FR</option><option value="en" title="English">EN</option><option value="it" title="Italiano">IT</option><option value="es" title="Español">ES</option><option value="de" title="Deutsch">DE</option><option value="nl" title="Nederlands">NL</option></select></label>
     </div>
   </div>
 </header>
@@ -969,6 +987,7 @@ header .wrap{flex-wrap:wrap}
 <section id="portal" hidden aria-live="polite"><div class="wrap" id="portal-body"></div></section>
 <div class="toast" id="toast" hidden></div>
 
+<script type="module" src="/src/i18n.js"></script>
 <script type="module" src="/src/datepicker.js"></script>
 <script type="module" src="/src/portal.js"></script>
 
@@ -980,11 +999,13 @@ header .wrap{flex-wrap:wrap}
     <span data-k="footer-02">Conciergerie privée · Embrun · Les Orres · Crévoux</span>
     <div class="foot-nav"><a href="#top">Accueil</a><a href="#voyageurs">Voyageurs</a><a href="#proprietaires">Propriétaires</a><a href="#territoire">Territoire</a><a href="#contact">Contact</a></div>
     <span data-k="footer-03">Tarifs indicatifs, hors frais des partenaires</span>
+    <label class="lang foot-lang"><span class="sr-only">Langue · Language</span><select class="lang-sel" aria-label="Langue · Language"><option value="fr" title="Français">FR</option><option value="en" title="English">EN</option><option value="it" title="Italiano">IT</option><option value="es" title="Español">ES</option><option value="de" title="Deutsch">DE</option><option value="nl" title="Nederlands">NL</option></select></label>
   </div>
 </footer>
 
 <script>
 (function(){
+  const T = (s, v) => (window.altioraT ? window.altioraT(s, v) : s);
   const form = document.getElementById('contact-form');
   const done = document.getElementById('done');
   const err = document.getElementById('f-err');
@@ -996,11 +1017,12 @@ header .wrap{flex-wrap:wrap}
     const owner = document.getElementById('who-p').checked;
     document.getElementById('field-date').hidden = owner;
     document.getElementById('field-bien').hidden = !owner;
-    lMsg.textContent = owner ? 'Votre projet' : 'Ce dont vous avez besoin';
-    fMsg.placeholder = owner ? 'Je loue déjà sur Airbnb et cherche quelqu’un pour l’accueil et le ménage…' : 'Courses à l’arrivée, skis pour 4, transfert depuis la gare…';
-    sub.textContent = owner ? 'Envoyer ma demande de visite' : 'Envoyer ma demande';
+    lMsg.textContent = T(owner ? 'Votre projet' : 'Ce dont vous avez besoin');
+    fMsg.placeholder = T(owner ? 'Je loue déjà sur Airbnb et cherche quelqu’un pour l’accueil et le ménage…' : 'Courses à l\'arrivée, skis pour 4, transfert depuis la gare…');
+    sub.textContent = T(owner ? 'Envoyer ma demande de visite' : 'Envoyer ma demande');
   }
   form.addEventListener('change', e => { if (e.target.name === 'who') mode(); });
+  addEventListener('altiora-lang', mode);
 
   form.addEventListener('submit', e => {
     e.preventDefault();
@@ -1020,23 +1042,23 @@ header .wrap{flex-wrap:wrap}
     ];
     document.getElementById('summary').textContent = lines.join('\n');
     const title = document.getElementById('done-title'), note = document.getElementById('done-note');
-    title.textContent = 'Envoi en cours…'; note.textContent = 'Votre message part vers la conciergerie.';
+    title.textContent = T('Envoi en cours…'); note.textContent = T('Votre message part vers la conciergerie.');
     form.hidden = true; done.hidden = false;
     const send = window.altioraSendLead ? window.altioraSendLead({name, reach, kind: owner ? 'proprietaire' : 'voyageur', place: d.get('zone'), dates: ((owner ? d.get('bien') : d.get('dates'))||'').trim(), body: (d.get('msg')||'').trim()}) : Promise.reject(new Error('indisponible'));
     send.then(() => {
-      title.textContent = 'Votre message est bien arrivé.';
-      note.textContent = 'Nous vous répondons personnellement, en général dans la journée.';
+      title.textContent = T('Votre message est bien arrivé.');
+      note.textContent = T('Nous vous répondons personnellement, en général dans la journée.');
     }).catch(() => {
-      title.textContent = 'L\u2019envoi n\u2019a pas abouti.';
-      note.textContent = 'Copiez votre message et envoyez-le par courriel à ' + ((document.querySelector('[data-k="contact-05"]')||{}).textContent || 'la conciergerie') + ', ou réessayez dans un instant.';
+      title.textContent = T('L’envoi n’a pas abouti.');
+      note.textContent = T('Copiez votre message et envoyez-le par courriel à {mail}, ou réessayez dans un instant.', {mail: (document.querySelector('[data-k="contact-05"]')||{}).textContent || 'la conciergerie'});
     });
   });
 
   document.getElementById('edit').addEventListener('click', () => { done.hidden = true; form.hidden = false; });
   document.getElementById('copy').addEventListener('click', e => {
     const btn = e.currentTarget, text = document.getElementById('summary').textContent;
-    const fallback = () => { const r = document.createRange(); r.selectNodeContents(document.getElementById('summary')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = 'Texte sélectionné'; };
-    try { navigator.clipboard.writeText(text).then(() => { btn.textContent = 'Copié'; }, fallback); } catch(_) { fallback(); }
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents(document.getElementById('summary')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); btn.textContent = T('Texte sélectionné'); };
+    try { navigator.clipboard.writeText(text).then(() => { btn.textContent = T('Copié'); }, fallback); } catch(_) { fallback(); }
   });
 })();
 </script>
@@ -1072,7 +1094,7 @@ header .wrap{flex-wrap:wrap}
 <script>
 (function(){
   const h = document.querySelector('header'), btn = h.querySelector('.menu-btn');
-  const set = (on) => { h.classList.toggle('open', on); btn.setAttribute('aria-expanded', on); btn.querySelector('span').textContent = on ? 'Fermer' : 'Menu'; document.documentElement.style.overflow = on ? 'hidden' : ''; };
+  const set = (on) => { h.classList.toggle('open', on); btn.setAttribute('aria-expanded', on); btn.querySelector('span').textContent = (window.altioraT||(x=>x))(on ? 'Fermer' : 'Menu'); document.documentElement.style.overflow = on ? 'hidden' : ''; };
   btn.addEventListener('click', () => set(!h.classList.contains('open')));
   h.querySelectorAll('.navs a').forEach((a) => a.addEventListener('click', () => set(false)));
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && h.classList.contains('open')) { set(false); btn.focus(); } });

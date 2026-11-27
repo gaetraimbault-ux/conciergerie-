@@ -2,14 +2,15 @@
 import { supabase, inviteClient, configured } from './supabase.js';
 import { renderAuth, AUTH_CSS } from './auth-ui.js';
 import { loadSiteContent, renderSiteEditor, CMS_CSS } from './cms.js';
+import { t, locale } from './i18n.js';
 { const c = document.createElement('style'); c.textContent = AUTH_CSS + CMS_CSS; document.head.appendChild(c); }
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmtDate = (d) => { if (!d) return '—'; const x = new Date(String(d).length === 10 ? d + 'T12:00' : d); return isNaN(x) ? esc(d) : x.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'long' }); };
-const fmtTime = (t) => { const x = new Date(t); return isNaN(x) ? '' : x.toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
+const fmtDate = (d) => { if (!d) return '—'; const x = new Date(String(d).length === 10 ? d + 'T12:00' : d); return isNaN(x) ? esc(d) : x.toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'long' }); };
+const fmtTime = (t) => { const x = new Date(t); return isNaN(x) ? '' : x.toLocaleString(locale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); };
 const STATUS = { nouvelle: 'Nouvelle', confirmee: 'Confirmée', terminee: 'Terminée', annulee: 'Annulée' };
-const pill = (s) => `<span class="pill ${esc(s)}">${STATUS[s] || esc(s)}</span>`;
+const pill = (s) => `<span class="pill ${esc(s)}">${STATUS[s] ? t(STATUS[s]) : esc(s)}</span>`;
 const SERVICES_V = ['Courses livrées avant l’arrivée', 'Pack Arrivée', 'Skis et forfaits au logement', 'Transfert depuis la gare d’Embrun', 'Chef à domicile', 'Matériel bébé', 'Garde d’enfants', 'Massage ou activité', 'Arrivée anticipée ou départ tardif'];
 const SERVICES_P = ['Ménage de fin de séjour', 'Linge de lit et de toilette', 'Mise en chauffe avant l’arrivée', 'Déneigement', 'Visite de contrôle', 'Petite maintenance', 'Accueil + état des lieux'];
 
@@ -49,7 +50,7 @@ async function render() {
   if (st.recovery && st.session) return renderAuth(body, supabase, { mode: 'reset', toast });
   if (st.session?.user?.user_metadata?.needs_password) return renderAuth(body, supabase, { mode: 'reset', welcome: true, toast });
   if (!st.session) return renderLogin();
-  if (!st.me) { await loadMe(); if (!st.me) { body.innerHTML = '<p class="empty">Création de votre espace…</p>'; setTimeout(async () => { await loadMe(); render(); }, 1500); return; } }
+  if (!st.me) { await loadMe(); if (!st.me) { body.innerHTML = `<p class="empty">${t('Création de votre espace…')}</p>`; setTimeout(async () => { await loadMe(); render(); }, 1500); return; } }
   subscribe();
   return st.me.role === 'gerant' ? renderGerant() : renderClient();
 }
@@ -67,7 +68,7 @@ function subscribe() {
   st.channel = supabase.channel('altiora')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (p) => {
       const m = p.new;
-      if (st.me && m.sender_id !== st.me.id) toast('Nouveau message');
+      if (st.me && m.sender_id !== st.me.id) toast(t('Nouveau message'));
       render();
     })
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'leads' }, () => { if (st.me?.role === 'gerant') { toast('Nouveau message du site'); render(); } })
@@ -75,8 +76,8 @@ function subscribe() {
 }
 
 const thread = (msgs, me, names) => msgs.length
-  ? `<div class="thread" id="thread">${msgs.map((m) => `<div class="msg ${m.sender_id === me ? 'mine' : ''}"><p>${esc(m.body)}</p><span>${esc(names[m.sender_id] || 'Conciergerie')} · ${fmtTime(m.created_at)}</span></div>`).join('')}</div>`
-  : '<p class="empty">Pas encore de message.</p>';
+  ? `<div class="thread" id="thread">${msgs.map((m) => `<div class="msg ${m.sender_id === me ? 'mine' : ''}"><p>${esc(m.body)}</p><span>${esc(names[m.sender_id] || t('Conciergerie'))} · ${fmtTime(m.created_at)}</span></div>`).join('')}</div>`
+  : `<p class="empty">${t('Pas encore de message.')}</p>`;
 const scrollThread = () => { const t = $('thread'); if (t) t.scrollTop = t.scrollHeight; };
 
 /* ---------- Espace client ---------- */
@@ -86,33 +87,33 @@ async function renderClient() {
     supabase.from('messages').select('*').eq('client_id', me.id).order('created_at'),
     supabase.from('requests').select('*').eq('client_id', me.id).order('wanted_on'),
   ]);
-  const names = { [me.id]: me.full_name || 'Vous' };
+  const names = { [me.id]: me.full_name || t('Vous') };
   const services = me.kind === 'proprietaire' ? SERVICES_P : SERVICES_V;
-  const info = me.property ? `<div class="panel"><h2>${me.kind === 'proprietaire' ? 'Votre bien' : 'Votre séjour'}</h2><div class="stay"><p class="big">${esc(me.property)}</p>
-    ${me.kind === 'proprietaire' ? '' : `<div><span>Arrivée</span>${fmtDate(me.stay_from)}</div><div><span>Départ</span>${fmtDate(me.stay_to)}</div>`}<div><span>Votre contact</span>La conciergerie</div></div></div>` : '';
-  body.innerHTML = `<div class="p-head"><div><p class="eyebrow">Espace client</p><h1>Bonjour, ${esc(me.full_name || '')}.</h1><p class="who-is">${esc(me.email || '')}</p></div><button class="linkbtn" id="logout">Se déconnecter</button></div>
+  const info = me.property ? `<div class="panel"><h2>${t(me.kind === 'proprietaire' ? 'Votre bien' : 'Votre séjour')}</h2><div class="stay"><p class="big">${esc(me.property)}</p>
+    ${me.kind === 'proprietaire' ? '' : `<div><span>${t('Arrivée')}</span>${fmtDate(me.stay_from)}</div><div><span>${t('Départ')}</span>${fmtDate(me.stay_to)}</div>`}<div><span>${t('Votre contact')}</span>${t('La conciergerie')}</div></div></div>` : '';
+  body.innerHTML = `<div class="p-head"><div><p class="eyebrow">${t('Espace client')}</p><h1>${t('Bonjour, {name}.', { name: esc(me.full_name || '') })}</h1><p class="who-is">${esc(me.email || '')}</p></div><button class="linkbtn" id="logout">${t('Se déconnecter')}</button></div>
   <div class="p-grid"><div>${info}
-    <div class="panel"><h2>Messages</h2>${thread(msgs, me.id, names)}
-      <form class="newreq" id="cmsg" novalidate><div class="field"><label for="cm-t">Écrire à la conciergerie</label><textarea id="cm-t" placeholder="Votre message…"></textarea></div><button class="btn solid" type="submit">Envoyer le message</button></form></div>
-    <div class="panel"><h2>Vos demandes <small>${reqs.length}</small></h2>${reqs.length ? `<div class="list">${reqs.map((r) => `<div class="item"><span class="t">${esc(r.service)}</span><span class="m">${fmtDate(r.wanted_on)}${r.detail ? ' · ' + esc(r.detail) : ''}</span><span class="s">${pill(r.status)}</span></div>`).join('')}</div>` : '<p class="empty">Aucune demande pour l’instant.</p>'}</div>
-  </div><aside class="panel"><h2>Nouvelle demande</h2><form class="newreq" id="newreq" novalidate>
-    <div class="field"><label for="nr-s">Service</label><select id="nr-s">${services.map((s) => `<option>${esc(s)}</option>`).join('')}</select></div>
-    <div class="field"><label for="nr-d">Date souhaitée</label><input id="nr-d" type="date"></div>
-    <div class="field"><label for="nr-t">Précisions</label><textarea id="nr-t" placeholder="Nombre de personnes, horaires, préférences…"></textarea></div>
-    <button class="btn solid" type="submit">Envoyer la demande</button></form></aside></div>`;
+    <div class="panel"><h2>${t('Messages')}</h2>${thread(msgs, me.id, names)}
+      <form class="newreq" id="cmsg" novalidate><div class="field"><label for="cm-t">${t('Écrire à la conciergerie')}</label><textarea id="cm-t" placeholder="${t('Votre message…')}"></textarea></div><button class="btn solid" type="submit">${t('Envoyer le message')}</button></form></div>
+    <div class="panel"><h2>${t('Vos demandes')} <small>${reqs.length}</small></h2>${reqs.length ? `<div class="list">${reqs.map((r) => `<div class="item"><span class="t">${esc(t(r.service))}</span><span class="m">${fmtDate(r.wanted_on)}${r.detail ? ' · ' + esc(r.detail) : ''}</span><span class="s">${pill(r.status)}</span></div>`).join('')}</div>` : `<p class="empty">${t('Aucune demande pour l’instant.')}</p>`}</div>
+  </div><aside class="panel"><h2>${t('Nouvelle demande')}</h2><form class="newreq" id="newreq" novalidate>
+    <div class="field"><label for="nr-s">${t('Service')}</label><select id="nr-s">${services.map((s) => `<option value="${esc(s)}">${esc(t(s))}</option>`).join('')}</select></div>
+    <div class="field"><label for="nr-d">${t('Date souhaitée')}</label><input id="nr-d" type="date"></div>
+    <div class="field"><label for="nr-t">${t('Précisions')}</label><textarea id="nr-t" placeholder="${t('Nombre de personnes, horaires, préférences…')}"></textarea></div>
+    <button class="btn solid" type="submit">${t('Envoyer la demande')}</button></form></aside></div>`;
   scrollThread();
   $('logout').onclick = logout;
   $('cmsg').addEventListener('submit', async (e) => {
     e.preventDefault(); const t = $('cm-t').value.trim(); if (!t) return;
     const { error } = await supabase.from('messages').insert({ client_id: me.id, sender_id: me.id, body: t });
-    if (error) return toast('Message non envoyé : ' + error.message);
-    toast('Message envoyé à la conciergerie'); render();
+    if (error) return toast(t('Message non envoyé : ') + error.message);
+    toast(t('Message envoyé à la conciergerie')); render();
   });
   $('newreq').addEventListener('submit', async (e) => {
     e.preventDefault();
     const { error } = await supabase.from('requests').insert({ client_id: me.id, service: $('nr-s').value, wanted_on: $('nr-d').value || null, detail: $('nr-t').value.trim() || null });
-    if (error) return toast('Demande non envoyée : ' + error.message);
-    toast('Demande envoyée'); render();
+    if (error) return toast(t('Demande non envoyée : ') + error.message);
+    toast(t('Demande envoyée')); render();
   });
 }
 
@@ -238,3 +239,4 @@ if (configured) {
   });
 }
 route();
+addEventListener('altiora-lang', () => render());
