@@ -6,7 +6,7 @@
 <meta name="description" content="Conciergerie privée à Embrun, aux Orres et à Crévoux : services aux voyageurs et gestion de locations saisonnières.">
 <title>Altiora Conciergerie</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap">
 <style>
 /* Layout : un chalet qu'on traverse. Bandes de bois sombre, pièces claires en laine, balcon découpé entre les étages, lueur de cheminée en accent. */
 :root{
@@ -309,6 +309,125 @@ nav,.btn,.who label{font-size:13px;letter-spacing:.14em;font-weight:500}
 
 
 
+<style id="nuit">
+/* Couche « nuit en montagne » : grande scène de nuit, vert-noir profond, sable doux, titres à deux voix (droit + italique), filets fins. Le chalet, le bois et la balustrade restent. */
+:root{
+  --snow:#F6F3EE;--paper:#FBFAF7;--ink:#1B201E;--muted:#5F6461;--line:#E2DDD4;
+  --night:#1C2320;--night-2:#161C19;--night-fg:#F3EEE6;--sand:#B9A584;--sand-ink:#8C7651;
+  --larch:#1B201E;--larch-ink:#8C7651;--ember:#B9A584;--band:#1C2320;--band-2:#161C19;--band-fg:#F3EEE6;
+  --display:"Playfair Display", Georgia, serif;
+  --body:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:var(--body);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --snow:#121715;--paper:#18201D;--ink:#F1ECE4;--muted:#A9AEA9;--line:#2A322E;--sand-ink:#C9B591;
+  --larch:#F1ECE4;--larch-ink:#C9B591;--ember:#C9B591;--band:#0E1311;--band-2:#0A0E0C;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --snow:#121715;--paper:#18201D;--ink:#F1ECE4;--muted:#A9AEA9;--line:#2A322E;--sand-ink:#C9B591;
+  --larch:#F1ECE4;--larch-ink:#C9B591;--ember:#C9B591;--band:#0E1311;--band-2:#0A0E0C;color-scheme:dark}
+
+body{font-family:var(--body);font-size:17px;line-height:1.75}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.01em}
+h2 em,h1 em{font-style:italic;color:var(--sand-ink)}
+
+/* Filet devant les surtitres */
+.eyebrow{display:inline-flex;align-items:center;gap:18px;font-size:12.5px;letter-spacing:.24em;font-weight:500;color:var(--sand-ink)}
+.eyebrow::before{content:"";width:40px;height:1px;background:currentColor;flex:none}
+
+/* Bandeau « version de travail » : discret, en bas à gauche */
+.draft{position:fixed;left:16px;bottom:16px;z-index:20;background:var(--night);color:var(--night-fg);border:1px solid rgba(185,165,132,.5);font-size:11px;letter-spacing:.12em;max-width:calc(100vw - 32px)}
+.draft .wrap{padding:6px 12px}
+.draft{transition:opacity .3s}
+body:not(.scrolled) .draft{opacity:0;pointer-events:none}
+
+/* En-tête : transparent sur la scène, ivoire dès qu'on descend */
+header{position:fixed;left:0;right:0;top:env(safe-area-inset-top,0px);background:transparent;border-bottom:1px solid transparent;backdrop-filter:none;transition:background .35s,border-color .35s,color .35s;color:#F6F1E9}
+header .wrap{max-width:none;padding:22px clamp(20px,4vw,64px)}
+header.solid{background:color-mix(in srgb, var(--snow) 94%, transparent);backdrop-filter:blur(10px);border-bottom-color:var(--line);color:var(--ink)}
+header.solid .wrap{padding-block:14px}
+.brand{flex-direction:column;align-items:center;gap:2px;font-size:30px;letter-spacing:.22em;line-height:1;color:inherit}
+.brand small{font-size:9.5px;letter-spacing:.38em;color:inherit;opacity:.8}
+.navs{display:flex;align-items:center;gap:clamp(20px,3vw,44px)}
+nav{gap:clamp(18px,3vw,44px);font-size:14.5px;letter-spacing:.06em;text-transform:none;font-weight:400;align-items:center}
+nav a{color:inherit;opacity:.9}
+nav a:hover{color:inherit;opacity:1}
+nav .cta-nav{color:inherit;border:1px solid currentColor;padding:12px 22px;display:inline-flex;align-items:center;gap:16px;opacity:1}
+nav .cta-nav::after{content:"";width:22px;height:1px;background:currentColor}
+nav a[aria-current="page"]{border-bottom:1px solid currentColor}
+.acc-links{font-size:13px;opacity:.85}
+.acc-links a{color:inherit;text-transform:none;letter-spacing:.04em}
+@media (max-width:980px){.acc-links{display:none}}
+@media (max-width:760px){.brand{font-size:22px}.brand small{font-size:8px}nav .cta-nav{padding:9px 14px}}
+
+/* Ouverture : la scène de nuit */
+.hero{min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;color:#F6F1E9;background:#18202f;isolation:isolate}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg, rgba(14,18,26,.78) 0%, rgba(14,18,26,.45) 45%, rgba(14,18,26,0) 75%),linear-gradient(0deg, rgba(14,18,26,.55), transparent 35%)}
+.scene{position:absolute;inset:0;width:100%;height:100%;z-index:-2;display:block}
+.scene .sc-chalet rect[fill^="url"]{animation:flicker 5s ease-in-out infinite}
+.hero .wrap{display:block;padding-block:0}
+.hero-in{max-width:none;padding:clamp(120px,18vh,200px) clamp(20px,4vw,64px) 0 !important;width:100%}
+.hero .eyebrow{color:#F6F1E9}
+.hero h1{font-size:clamp(46px,7vw,108px);line-height:1.02;max-width:none;color:#FBF8F3}
+.hero h1 em{display:block;color:#EFE6D6}
+.hero .lede{color:rgba(246,241,233,.86);max-width:46ch;font-size:18.5px;margin-top:28px}
+.hero .actions{padding-bottom:0;margin-top:40px;gap:28px;align-items:center}
+.hero-foot{max-width:none;width:100%;display:flex !important;justify-content:space-between;align-items:center;gap:20px;padding:56px clamp(20px,4vw,64px) 28px !important;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:rgba(246,241,233,.85)}
+.hero-foot .scroll{text-decoration:none;display:inline-flex;align-items:center;gap:16px}
+.hero-foot .scroll::after{content:"";width:54px;height:1px;background:currentColor}
+.hero + .balcony{display:none}
+.chalet{display:none}
+
+/* Boutons */
+.btn{border-radius:0;font:500 14.5px var(--body);letter-spacing:.06em;text-transform:none;padding:18px 38px;border:1px solid var(--ink);color:var(--ink)}
+.btn.solid{background:var(--night);border-color:var(--night);color:var(--night-fg)}
+.btn.solid:hover{background:var(--sand);border-color:var(--sand);color:var(--night)}
+.hero .btn.solid{background:#F6F1E9;border-color:#F6F1E9;color:#1B201E}
+.hero .btn.solid:hover{background:var(--sand);border-color:var(--sand)}
+.btn.line{border:0;border-bottom:1px solid currentColor;padding:6px 0 10px;gap:18px;background:transparent}
+.btn.line::after{content:"";width:26px;height:1px;background:currentColor;transition:width .2s}
+.btn.line:hover{background:transparent;color:inherit}
+.btn.line:hover::after{width:40px}
+.hero .btn.line{color:#F6F1E9}
+
+/* Sections sombres : vert nuit, cercles fins, titres centrés */
+.wood{background-color:var(--night);background-image:repeating-linear-gradient(90deg, transparent 0 160px, rgba(255,255,255,.022) 160px 161px);position:relative;overflow:hidden}
+.wood::before,.wood::after{content:"";position:absolute;border:1px solid rgba(185,165,132,.16);border-radius:50%;pointer-events:none}
+.wood::before{width:680px;height:680px;left:-340px;top:-360px}
+.wood::after{width:760px;height:760px;right:-380px;bottom:-520px}
+.seasons .wrap,.promise .wrap{position:relative;z-index:1}
+.seasons .wrap{padding-block:110px;gap:48px;align-items:start}
+.seasons h2{font-size:clamp(34px,4.2vw,52px);line-height:1.1}
+.season{border:0;border-top:1px solid rgba(185,165,132,.35);padding:22px 0 0}
+.season .when,.promise h3{color:var(--sand)}
+.balcony{background-color:var(--night);height:18px;opacity:.9}
+.promise .wrap{padding-block:110px}
+.promise .big{font-style:italic;color:#EFE6D6;text-align:center;margin:0 auto 40px;max-width:24ch;font-size:clamp(32px,4.4vw,56px);line-height:1.15}
+.promise h3{font-size:12.5px;letter-spacing:.24em}
+.pack{background:var(--night);outline-color:var(--sand)}
+.pack .eyebrow{color:var(--sand)}
+footer{background:var(--night-2)}
+
+/* Contenu clair : plus d'air, filets sable */
+section.block .wrap{padding-block:120px}
+.head{margin-bottom:64px}
+.head h2{font-size:clamp(38px,5.2vw,64px);line-height:1.06}
+.svc{border-top-color:var(--line)}
+.svc h3{font-size:26px}
+.svc .price{color:var(--sand-ink);font-weight:500}
+.plan.featured{border-color:var(--sand)}
+.plan.featured .tag,.step::before{color:var(--sand-ink)}
+.plan li::before{background:var(--sand)}
+.rates td:last-child{color:var(--sand-ink);font-weight:500}
+.zone{border-top-color:var(--line)}
+.zone .alt{color:var(--sand-ink)}
+.who{border-color:var(--ink)}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--sand)}
+
+/* Espaces clients et gérants : laisser la place à l'en-tête fixe */
+#portal{padding-top:110px}
+main section,#portal{scroll-margin-top:84px}
+@media (max-width:760px){.scene{width:auto;aspect-ratio:16/9;left:auto;right:-34%}.hero::after{background:linear-gradient(180deg, rgba(14,18,26,.55) 0%, rgba(14,18,26,.35) 40%, rgba(14,18,26,.82) 100%)}.hero .eyebrow::before{display:none}.hero h1{font-size:clamp(40px,11vw,60px)}.hero-foot{font-size:10.5px;letter-spacing:.18em}.hero-foot p{max-width:60%}.seasons .wrap,.promise .wrap,section.block .wrap{padding-block:80px}.wood::before,.wood::after{display:none}}
+</style>
 </head>
 <body>
 <div class="draft"><div class="wrap">Version de travail · nom de marque provisoire, coordonnées et tarifs à valider</div></div>
@@ -332,49 +451,65 @@ nav,.btn,.who label{font-size:13px;letter-spacing:.14em;font-weight:500}
 </header>
 
 <main id="top">
-  <section class="hero">
-    <div class="wrap">
-      <div>
+  <section class="hero" aria-label="Accueil">
+    <svg class="scene" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Un chalet éclairé au-dessus du lac de Serre-Ponçon, à la tombée de la nuit">
+      <defs>
+        <linearGradient id="sc-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#18202f"/><stop offset=".45" stop-color="#2f3a55"/><stop offset=".62" stop-color="#5a5f7a"/><stop offset=".7" stop-color="#a48586"/><stop offset=".74" stop-color="#c9a08a"/></linearGradient>
+        <linearGradient id="sc-lake" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4f68"/><stop offset=".25" stop-color="#262e45"/><stop offset="1" stop-color="#0f141f"/></linearGradient>
+        <linearGradient id="sc-win" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe2a8"/><stop offset="1" stop-color="#e59b52"/></linearGradient>
+        <radialGradient id="sc-glow"><stop offset="0" stop-color="#f6b866" stop-opacity=".55"/><stop offset="1" stop-color="#f6b866" stop-opacity="0"/></radialGradient>
+      </defs>
+      <rect width="1600" height="900" fill="url(#sc-sky)"/>
+      <g fill="#fff" opacity=".55"><circle cx="210" cy="90" r="1.2"/><circle cx="420" cy="160" r="1"/><circle cx="640" cy="70" r="1.4"/><circle cx="880" cy="130" r="1"/><circle cx="1010" cy="60" r="1.2"/><circle cx="1240" cy="110" r="1"/><circle cx="1420" cy="70" r="1.3"/><circle cx="1530" cy="170" r="1"/><circle cx="320" cy="230" r=".9"/><circle cx="760" cy="210" r=".9"/></g>
+      <path fill="#56607c" d="M0 520 L90 470 L160 488 L250 420 L320 452 L400 398 L470 440 L560 372 L640 430 L720 410 L800 452 L880 386 L960 430 L1040 404 L1120 446 L1200 396 L1290 440 L1380 412 L1470 452 L1600 420 L1600 600 L0 600Z"/>
+      <path fill="#c9ccd6" opacity=".5" d="M250 420 L232 432 L262 430Z M400 398 L382 412 L414 410Z M560 372 L538 390 L576 386Z M880 386 L862 400 L896 398Z M1200 396 L1182 410 L1214 408Z"/>
+      <path fill="#39425e" d="M0 560 L120 500 L230 540 L330 486 L430 530 L540 474 L650 530 L760 500 L860 540 L980 492 L1090 536 L1200 500 L1320 540 L1440 506 L1600 540 L1600 610 L0 610Z"/>
+      <path fill="#242c42" d="M0 590 C160 560 300 552 470 572 C620 588 760 590 900 584 L900 620 L0 620Z"/>
+      <rect y="596" width="1600" height="304" fill="url(#sc-lake)"/>
+      <g stroke="#c9a08a" stroke-linecap="round" opacity=".35"><path d="M120 640h260M420 668h180M180 700h320M640 650h140M520 732h220M90 770h200M700 700h120"/></g>
+      <g class="sc-ref" stroke="#f6b866" stroke-linecap="round" opacity=".4"><path d="M1180 812h90M1200 830h60M1380 812h90M1400 830h60M1300 790h40"/></g>
+      <path fill="#11151d" d="M860 900 L860 800 C960 772 1080 760 1220 756 C1380 752 1500 748 1600 744 L1600 900Z"/>
+      <ellipse cx="1290" cy="640" rx="360" ry="200" fill="url(#sc-glow)"/>
+      <g class="sc-chalet">
+        <path fill="#2a211b" d="M1080 566 L1290 430 L1500 566 L1500 764 L1080 764Z"/>
+        <g stroke="#1c1612" stroke-width="3"><path d="M1122 540v224M1164 512v252M1206 485v279M1248 458v306M1332 458v306M1374 485v279M1416 512v252M1458 540v224"/></g>
+        <path fill="#0f0c0a" d="M1030 574 L1290 392 L1550 574 L1530 586 L1290 420 L1050 586Z"/>
+        <path fill="#e9e4dc" opacity=".85" d="M1036 570 L1290 392 L1544 570 L1524 566 L1450 516 L1420 524 L1360 474 L1290 428 L1220 474 L1176 500 L1130 526 L1056 566Z"/>
+        <rect x="1236" y="500" width="108" height="96" fill="url(#sc-win)"/>
+        <path stroke="#2a211b" stroke-width="4" fill="none" d="M1290 500v96M1236 548h108"/>
+        <rect x="1096" y="618" width="388" height="9" fill="#0f0c0a"/>
+        <g fill="#0f0c0a"><rect x="1104" y="627" width="5" height="28"/><rect x="1140" y="627" width="5" height="28"/><rect x="1176" y="627" width="5" height="28"/><rect x="1212" y="627" width="5" height="28"/><rect x="1364" y="627" width="5" height="28"/><rect x="1400" y="627" width="5" height="28"/><rect x="1436" y="627" width="5" height="28"/><rect x="1472" y="627" width="5" height="28"/></g>
+        <rect x="1096" y="655" width="388" height="6" fill="#0f0c0a"/>
+        <rect x="1110" y="672" width="160" height="92" fill="url(#sc-win)"/>
+        <rect x="1310" y="672" width="160" height="92" fill="url(#sc-win)"/>
+        <path stroke="#2a211b" stroke-width="4" fill="none" d="M1163 672v92M1216 672v92M1363 672v92M1416 672v92"/>
+        <rect x="1060" y="764" width="460" height="10" fill="#0b0d12"/>
+        <path class="sc-smoke" fill="none" stroke="#c9ccd6" stroke-width="3" stroke-linecap="round" opacity=".25" d="M1420 470c-10-14 10-24 0-38s10-24 0-38"/>
+        <rect x="1408" y="470" width="24" height="44" fill="#0f0c0a"/>
+      </g>
+      <g fill="#0c1016"><path d="M960 800 L1000 650 L1040 800Z M985 720 L1000 610 L1015 720Z"/><path d="M1010 790 L1040 690 L1070 790Z"/><path d="M1540 760 L1575 600 L1610 760Z M1560 680 L1575 560 L1590 680Z"/></g>
+      <g fill="#0a0d13"><path d="M-20 900 L60 600 L140 900Z M20 760 L60 540 L100 760Z"/><path d="M90 900 L160 680 L230 900Z"/></g>
+      <g fill="#f6b866"><circle cx="1120" cy="782" r="3"/><circle cx="1460" cy="780" r="3"/></g>
+    </svg>
+    <div class="wrap hero-in">
       <p data-k="hero-01" class="eyebrow">Conciergerie privée · Embrunais &amp; Serre-Ponçon</p>
       <h1 data-k="hero-02">L’art de recevoir, <em>à la montagne.</em></h1>
       <p data-k="hero-03" class="lede">Nous préparons vos séjours à Embrun, aux Orres et à Crévoux, et prenons soin des maisons et appartements de ceux qui les louent. Une seule équipe, sur place, l'hiver comme l'été.</p>
       <div class="actions">
         <a data-k="hero-04" class="btn solid" href="#voyageurs">Je prépare mon séjour</a>
-        <a data-k="hero-05" class="btn" href="#proprietaires">Je confie mon bien</a>
+        <a data-k="hero-05" class="btn line" href="#proprietaires">Je confie mon bien</a>
       </div>
-      </div>
-      <svg class="chalet" viewBox="0 0 480 380" role="img" aria-label="Un chalet aux fenêtres éclairées entre les sapins">
-        <ellipse class="glow" cx="240" cy="270" rx="150" ry="70"/>
-        <path class="smoke" d="M318 70c-8-10 8-18 0-28s8-18 0-28"/>
-        <rect class="roof" x="306" y="74" width="22" height="42"/>
-        <path class="fir" d="M40 360 L78 220 L116 360Z M58 300 L78 190 L98 300Z"/>
-        <path class="fir" d="M380 360 L420 200 L460 360Z M400 290 L420 168 L440 290Z"/>
-        <path class="wall" d="M112 210 L240 120 L368 210 L368 352 L112 352Z"/>
-        <g class="plank">
-          <line x1="144" y1="190" x2="144" y2="352"/><line x1="176" y1="168" x2="176" y2="352"/><line x1="208" y1="146" x2="208" y2="352"/>
-          <line x1="240" y1="124" x2="240" y2="352"/><line x1="272" y1="146" x2="272" y2="352"/><line x1="304" y1="168" x2="304" y2="352"/><line x1="336" y1="190" x2="336" y2="352"/>
-        </g>
-        <path class="roof" d="M84 222 L240 104 L396 222 L380 230 L240 128 L100 230Z"/>
-        <path class="snowcap" d="M90 216 L240 104 L390 216 L380 214 L330 180 L310 188 L280 160 L240 132 L200 160 L176 172 L150 192 L120 206Z"/>
-        <rect class="win" x="214" y="176" width="52" height="40" rx="2"/>
-        <path class="frame" d="M214 176h52v40h-52z M240 176v40 M214 196h52"/>
-        <rect class="roof" x="120" y="252" width="240" height="10"/>
-        <g class="roof"><rect x="128" y="262" width="6" height="22"/><rect x="152" y="262" width="6" height="22"/><rect x="176" y="262" width="6" height="22"/><rect x="200" y="262" width="6" height="22"/><rect x="274" y="262" width="6" height="22"/><rect x="298" y="262" width="6" height="22"/><rect x="322" y="262" width="6" height="22"/><rect x="346" y="262" width="6" height="22"/></g>
-        <rect class="roof" x="120" y="284" width="240" height="6"/>
-        <rect class="win" x="152" y="298" width="44" height="40" rx="2"/>
-        <path class="frame" d="M152 298h44v40h-44z M174 298v40"/>
-        <rect class="win" x="284" y="298" width="44" height="40" rx="2"/>
-        <path class="frame" d="M284 298h44v40h-44z M306 298v40"/>
-        <rect class="roof" x="222" y="296" width="36" height="56" rx="2"/>
-        <path class="ground" d="M0 352 C120 340 360 340 480 352 L480 380 L0 380Z"/>
-      </svg>
+    </div>
+    <div class="wrap hero-foot">
+      <p data-k="hero-06">Embrun · Les Orres · Crévoux</p>
+      <a data-k="hero-07" class="scroll" href="#voyageurs">Défiler</a>
     </div>
   </section>
 
   <div class="balcony" aria-hidden="true"></div>
   <section class="seasons wood" aria-label="Deux saisons">
     <div class="wrap">
-      <h2 data-k="seasons-01">Une maison ouverte toute l'année.</h2>
+      <h2 data-k="seasons-01">Une maison ouverte <em>toute l'année.</em></h2>
       <div class="season">
         <p data-k="seasons-02" class="when">Mi-décembre → mi-avril</p>
         <h3 data-k="seasons-03">L'hiver en station</h3>
@@ -393,7 +528,7 @@ nav,.btn,.who label{font-size:13px;letter-spacing:.14em;font-weight:500}
       <div class="head">
         <div>
           <p data-k="voyageurs-01" class="eyebrow">Pour les voyageurs</p>
-          <h2 data-k="voyageurs-02">Arrivez, tout est prêt.</h2>
+          <h2 data-k="voyageurs-02">Arrivez, <em>tout est prêt.</em></h2>
         </div>
         <p data-k="voyageurs-03">Vous louez un logement dans la vallée ? Dites-nous ce qu'il vous faut, nous nous occupons du reste avec nos partenaires de la vallée : loueurs de ski, chefs, taxis, moniteurs.</p>
       </div>
@@ -452,7 +587,7 @@ nav,.btn,.who label{font-size:13px;letter-spacing:.14em;font-weight:500}
       <div class="head">
         <div>
           <p data-k="proprietaires-01" class="eyebrow">Pour les propriétaires</p>
-          <h2 data-k="proprietaires-02">Votre bien, tenu comme un hôtel.</h2>
+          <h2 data-k="proprietaires-02">Votre bien, <em>tenu comme un hôtel.</em></h2>
         </div>
         <p data-k="proprietaires-03">Vous louez votre appartement ou votre chalet en saison ? Nous accueillons vos voyageurs, préparons le logement entre deux séjours et veillons sur lui quand la station est fermée. Vous recevez un rapport photo après chaque passage.</p>
       </div>
@@ -528,7 +663,7 @@ nav,.btn,.who label{font-size:13px;letter-spacing:.14em;font-weight:500}
       <div class="head">
         <div>
           <p data-k="territoire-01" class="eyebrow">Territoire</p>
-          <h2 data-k="territoire-02">De 871 à 2&nbsp;720&nbsp;mètres.</h2>
+          <h2 data-k="territoire-02">De 871 à <em>2&nbsp;720&nbsp;mètres.</em></h2>
         </div>
         <p data-k="territoire-03">Nous sommes installés dans l'Embrunais. Les Orres et Crévoux sont à une vingtaine de minutes de route, ce qui nous permet d'intervenir vite, y compris un samedi de février.</p>
       </div>
@@ -556,7 +691,7 @@ nav,.btn,.who label{font-size:13px;letter-spacing:.14em;font-weight:500}
     <div class="wrap contact-grid">
       <aside>
         <p data-k="contact-01" class="eyebrow">Contact</p>
-        <h2 data-k="contact-02" style="font-size:clamp(36px,5vw,56px)">Parlons de votre séjour, ou de votre bien.</h2>
+        <h2 data-k="contact-02" style="font-size:clamp(36px,5vw,56px)">Parlons de votre séjour, <em>ou de votre bien.</em></h2>
         <p data-k="contact-03">Décrivez votre besoin en quelques lignes. Nous vous répondons personnellement, avec une proposition sur mesure.</p>
         <div class="coords">
           <div><span data-k="contact-04">Courriel</span><b data-k="contact-05">bonjour@altiora-conciergerie.fr</b></div>
@@ -773,5 +908,12 @@ header .wrap{flex-wrap:wrap}
 })();
 </script>
 
+<script>
+(function(){
+  const h=document.querySelector('header'), top=document.getElementById('top');
+  const upd=()=>{const on = top.hidden || window.scrollY > 40; h.classList.toggle('solid', on); document.body.classList.toggle('scrolled', on);};
+  addEventListener('scroll', upd, {passive:true}); addEventListener('hashchange', ()=>setTimeout(upd)); new MutationObserver(upd).observe(top,{attributes:true,attributeFilter:['hidden']}); upd();
+})();
+</script>
 </body>
 </html>
