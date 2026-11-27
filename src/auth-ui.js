@@ -51,7 +51,7 @@ export function renderAuth(body, supabase, opts = {}) {
         <input type="radio" name="su-kind" id="su-v" value="voyageur" checked><label for="su-v">${t('Je séjourne')}</label>
         <input type="radio" name="su-kind" id="su-o" value="proprietaire"><label for="su-o">${t('Je suis propriétaire')}</label></div>
       <div class="row"><div class="field"><label for="su-fn">${t('Prénom')}</label><input id="su-fn" autocomplete="given-name"></div>
-        <div class="field"><label for="su-ln">${t('Nom')}</label><input id="su-ln" autocomplete="family-name"></div></div>
+        <div class="field"><label for="su-ln">${t('Nom|famille')}</label><input id="su-ln" autocomplete="family-name"></div></div>
       <div class="row"><div class="field"><label for="su-e">${t('Adresse courriel')}</label><input id="su-e" type="email" autocomplete="email"></div>
         <div class="field"><label for="su-ph">${t('Téléphone')}</label><input id="su-ph" type="tel" autocomplete="tel" placeholder="${t('06 12 34 56 78')}"></div></div>
       <div class="row"><div class="field"><label for="su-pl">${t('Lieu')}</label><select id="su-pl">${LIEUX.map((l) => `<option value="${l}">${t(l)}</option>`).join('')}</select></div>

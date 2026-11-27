@@ -35,7 +35,8 @@ export const locale = () => LANGS.find((l) => l[0] === lang)[2];
 
 // Traduit une phrase française ; {nom} est remplacé par vars.nom.
 export function t(s, vars) {
-  let out = lang === 'fr' ? s : (DICT[lang].p[s] ?? s);
+  // « Nom|famille » : même mot français, traduction différente selon le contexte.
+  let out = lang === 'fr' ? s.split('|')[0] : (DICT[lang].p[s] ?? s.split('|')[0]);
   if (vars) out = out.replace(/\{(\w+)\}/g, (m, k) => (k in vars ? vars[k] : m));
   return out;
 }
