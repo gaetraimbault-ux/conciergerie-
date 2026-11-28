@@ -80,6 +80,41 @@ const thread = (msgs, me, names) => msgs.length
   : `<p class="empty">${t('Pas encore de message.')}</p>`;
 const scrollThread = () => { const t = $('thread'); if (t) t.scrollTop = t.scrollHeight; };
 
+/* ---------- Biens des propriétaires (un propriétaire peut en avoir plusieurs) ---------- */
+const LIEUX = ['Les Orres', 'Crévoux', 'Embrun', 'Savines-le-Lac', 'Vars', 'Risoul', 'Autre'];
+// Formulaire d'ajout (b vide) ou de modification d'un bien. owners : liste de propriétaires (vue gérant, ajout).
+const bienForm = (b = {}, owners = null) => `<form class="newreq bien-form" data-bien-form="${esc(b.id || '')}" novalidate>
+  ${owners ? `<div class="field"><label>${t('Propriétaire')}</label><select data-bf="owner_id">${owners.map((o) => `<option value="${esc(o.id)}">${esc(o.full_name || o.email)}</option>`).join('')}</select></div>` : ''}
+  <div class="row"><div class="field"><label>${t('Nom du bien')}</label><input data-bf="name" maxlength="200" value="${esc(b.name || '')}" placeholder="${t('ex. Chalet Les Mélèzes')}"></div>
+  <div class="field"><label>${t('Lieu')}</label><select data-bf="place">${LIEUX.map((l) => `<option value="${l}" ${l === b.place ? 'selected' : ''}>${t(l)}</option>`).join('')}</select></div></div>
+  <div class="field"><label>${t('Adresse')}</label><input data-bf="address" maxlength="300" value="${esc(b.address || '')}"></div>
+  <div class="field"><label>${t('Précisions')}</label><textarea data-bf="notes" maxlength="2000" placeholder="${t('Surface, couchages, accès, boîte à clés…')}">${esc(b.notes || '')}</textarea></div>
+  <p class="err" hidden></p>
+  <button class="btn solid" type="submit">${t(b.id ? 'Enregistrer le bien' : 'Ajouter le bien')}</button></form>`;
+const bienItem = (b, extra = '') => `<div class="item bien"><span class="t">${esc(b.name)}</span>
+  <span class="m">${[b.place ? t(b.place) : '', esc(b.address || '')].filter(Boolean).join(' · ')}${b.notes ? `<br>${esc(b.notes)}` : ''}${extra}</span>
+  <span class="s"><button class="linkbtn" type="button" data-bien-del="${esc(b.id)}">${t('Retirer')}</button></span>
+  <details class="bien-edit"><summary>${t('Modifier')}</summary>${bienForm(b)}</details></div>`;
+// Branche les formulaires et boutons des biens présents dans la page.
+function wireBiens(ownerId) {
+  body.querySelectorAll('[data-bien-form]').forEach((f) => f.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const v = {}; f.querySelectorAll('[data-bf]').forEach((i) => (v[i.dataset.bf] = i.value.trim() || null));
+    const err = f.querySelector('.err');
+    if (!v.name) { err.textContent = t('Indiquez le nom du bien.'); err.hidden = false; return; }
+    const id = f.dataset.bienForm;
+    if (!id && !v.owner_id) v.owner_id = ownerId;
+    const { error } = id ? await supabase.from('properties').update(v).eq('id', id) : await supabase.from('properties').insert(v);
+    if (error) { err.textContent = t('Enregistrement impossible : ') + error.message; err.hidden = false; return; }
+    toast(t(id ? 'Bien mis à jour' : 'Bien ajouté')); render();
+  }));
+  body.querySelectorAll('[data-bien-del]').forEach((b) => (b.onclick = async () => {
+    if (!b.dataset.sure) { b.dataset.sure = '1'; b.textContent = t('Confirmer le retrait'); b.classList.add('danger'); return; }
+    const { error } = await supabase.from('properties').delete().eq('id', b.dataset.bienDel);
+    toast(error ? t('Enregistrement impossible : ') + error.message : t('Bien retiré')); render();
+  }));
+}
+
 /* ---------- Espace client ---------- */
 async function renderClient() {
   const me = st.me;
@@ -88,20 +123,28 @@ async function renderClient() {
     supabase.from('requests').select('*').eq('client_id', me.id).order('wanted_on'),
   ]);
   const names = { [me.id]: me.full_name || t('Vous') };
-  const services = me.kind === 'proprietaire' ? SERVICES_P : SERVICES_V;
-  const info = me.property ? `<div class="panel"><h2>${t(me.kind === 'proprietaire' ? 'Votre bien' : 'Votre séjour')}</h2><div class="stay"><p class="big">${esc(me.property)}</p>
+  const owner = me.kind === 'proprietaire';
+  const { data: biens = [] } = owner ? await supabase.from('properties').select('*').eq('owner_id', me.id).order('created_at') : { data: [] };
+  const B = Object.fromEntries(biens.map((b) => [String(b.id), b]));
+  const services = owner ? SERVICES_P : SERVICES_V;
+  const biensPanel = owner ? `<div class="panel" id="biens"><h2>${t('Vos biens')} <small>${biens.length}</small></h2>
+    ${biens.length ? `<div class="list">${biens.map((b) => bienItem(b)).join('')}</div>` : `<p class="empty">${t('Aucun bien enregistré pour l’instant.')}</p>`}
+    <details class="bien-add" ${biens.length ? '' : 'open'}><summary>${t('Ajouter un bien')}</summary>${bienForm()}</details></div>` : '';
+  const info = !owner && me.property ? `<div class="panel"><h2>${t(me.kind === 'proprietaire' ? 'Votre bien' : 'Votre séjour')}</h2><div class="stay"><p class="big">${esc(me.property)}</p>
     ${me.kind === 'proprietaire' ? '' : `<div><span>${t('Arrivée')}</span>${fmtDate(me.stay_from)}</div><div><span>${t('Départ')}</span>${fmtDate(me.stay_to)}</div>`}<div><span>${t('Votre contact')}</span>${t('La conciergerie')}</div></div></div>` : '';
   body.innerHTML = `<div class="p-head"><div><p class="eyebrow">${t('Espace client')}</p><h1>${t('Bonjour, {name}.', { name: esc(me.full_name || '') })}</h1><p class="who-is">${esc(me.email || '')}</p></div><button class="linkbtn" id="logout">${t('Se déconnecter')}</button></div>
-  <div class="p-grid"><div>${info}
+  <div class="p-grid"><div>${info}${biensPanel}
     <div class="panel"><h2>${t('Messages')}</h2>${thread(msgs, me.id, names)}
       <form class="newreq" id="cmsg" novalidate><div class="field"><label for="cm-t">${t('Écrire à la conciergerie')}</label><textarea id="cm-t" placeholder="${t('Votre message…')}"></textarea></div><button class="btn solid" type="submit">${t('Envoyer le message')}</button></form></div>
-    <div class="panel"><h2>${t('Vos demandes')} <small>${reqs.length}</small></h2>${reqs.length ? `<div class="list">${reqs.map((r) => `<div class="item"><span class="t">${esc(t(r.service))}</span><span class="m">${fmtDate(r.wanted_on)}${r.detail ? ' · ' + esc(r.detail) : ''}</span><span class="s">${pill(r.status)}</span></div>`).join('')}</div>` : `<p class="empty">${t('Aucune demande pour l’instant.')}</p>`}</div>
+    <div class="panel"><h2>${t('Vos demandes')} <small>${reqs.length}</small></h2>${reqs.length ? `<div class="list">${reqs.map((r) => `<div class="item"><span class="t">${esc(t(r.service))}</span><span class="m">${B[r.property_id] ? esc(B[r.property_id].name) + ' · ' : ''}${fmtDate(r.wanted_on)}${r.detail ? ' · ' + esc(r.detail) : ''}</span><span class="s">${pill(r.status)}</span></div>`).join('')}</div>` : `<p class="empty">${t('Aucune demande pour l’instant.')}</p>`}</div>
   </div><aside class="panel"><h2>${t('Nouvelle demande')}</h2><form class="newreq" id="newreq" novalidate>
     <div class="field"><label for="nr-s">${t('Service')}</label><select id="nr-s">${services.map((s) => `<option value="${esc(s)}">${esc(t(s))}</option>`).join('')}</select></div>
+    ${biens.length ? `<div class="field"><label for="nr-b">${t('Bien concerné')}</label><select id="nr-b">${biens.length > 1 ? `<option value="">${t('Choisir…')}</option>` : ''}${biens.map((b) => `<option value="${esc(b.id)}">${esc(b.name)}</option>`).join('')}</select></div>` : ''}
     <div class="field"><label for="nr-d">${t('Date souhaitée')}</label><input id="nr-d" type="date"></div>
     <div class="field"><label for="nr-t">${t('Précisions')}</label><textarea id="nr-t" placeholder="${t('Nombre de personnes, horaires, préférences…')}"></textarea></div>
     <button class="btn solid" type="submit">${t('Envoyer la demande')}</button></form></aside></div>`;
   scrollThread();
+  wireBiens(me.id);
   $('logout').onclick = logout;
   $('cmsg').addEventListener('submit', async (e) => {
     e.preventDefault(); const t = $('cm-t').value.trim(); if (!t) return;
@@ -111,14 +154,16 @@ async function renderClient() {
   });
   $('newreq').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const { error } = await supabase.from('requests').insert({ client_id: me.id, service: $('nr-s').value, wanted_on: $('nr-d').value || null, detail: $('nr-t').value.trim() || null });
+    const property_id = $('nr-b')?.value || null;
+    if (biens.length > 1 && !property_id) return toast(t('Choisissez le bien concerné.'));
+    const { error } = await supabase.from('requests').insert({ client_id: me.id, service: $('nr-s').value, wanted_on: $('nr-d').value || null, detail: $('nr-t').value.trim() || null, property_id });
     if (error) return toast(t('Demande non envoyée : ') + error.message);
     toast(t('Demande envoyée')); render();
   });
 }
 
 /* ---------- Compte gérant ---------- */
-const TABS = [['messagerie', 'Messagerie'], ['contacts', 'Contacts du site'], ['demandes', 'Demandes'], ['clients', 'Comptes'], ['site', 'Textes du site']];
+const TABS = [['messagerie', 'Messagerie'], ['contacts', 'Contacts du site'], ['demandes', 'Demandes'], ['biens', 'Biens'], ['clients', 'Comptes'], ['site', 'Textes du site']];
 
 async function renderGerant() {
   const me = st.me;
@@ -129,6 +174,8 @@ async function renderGerant() {
     supabase.from('requests').select('*').order('created_at', { ascending: false }),
     supabase.from('leads').select('*').order('created_at', { ascending: false }),
   ]);
+  const { data: biens = [] } = await supabase.from('properties').select('*').order('created_at');
+  const BI = Object.fromEntries(biens.map((b) => [String(b.id), b]));
   const { data: invites = [] } = st.tab === 'clients' ? await supabase.from('invites').select('*').order('created_at', { ascending: false }) : { data: [] };
   const P = Object.fromEntries(profiles.map((p) => [p.id, p]));
   const names = Object.fromEntries(profiles.map((p) => [p.id, p.full_name || p.email]));
@@ -157,7 +204,15 @@ async function renderGerant() {
   } else if (tab === 'contacts') {
     content = leads.length ? `<div class="list">${leads.map((l) => `<div class="item"><span class="t">${esc(l.name)} · ${esc(l.reach)}</span><span class="m">${fmtTime(l.created_at)} · ${l.kind === 'proprietaire' ? 'Propriétaire' : 'Voyageur'} · ${esc(l.place || '')}${l.dates ? ' · ' + esc(l.dates) : ''}<br>${esc(l.body || '(pas de précision)')}</span><span class="s">${l.handled ? '<span class="pill terminee">Traité</span>' : `<button class="btn" type="button" data-lead="${esc(l.id)}">Marquer traité</button>`}</span></div>`).join('')}</div>` : '<p class="empty">Aucun message reçu depuis le site.</p>';
   } else if (tab === 'demandes') {
-    content = reqs.length ? `<div class="tbl-wrap"><table class="ptable"><thead><tr><th>Client</th><th>Service</th><th>Date</th><th>Statut</th></tr></thead><tbody>${reqs.map((r) => `<tr class="${r.status === 'nouvelle' ? 'is-new' : ''}"><td>${esc(names[r.client_id])}</td><td>${esc(r.service)}${r.detail ? `<div class="m">${esc(r.detail)}</div>` : ''}</td><td style="white-space:nowrap">${fmtDate(r.wanted_on)}</td><td><select aria-label="Statut" data-req="${esc(r.id)}">${Object.keys(STATUS).map((s) => `<option value="${s}" ${s === r.status ? 'selected' : ''}>${STATUS[s]}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Aucune demande.</p>';
+    content = reqs.length ? `<div class="tbl-wrap"><table class="ptable"><thead><tr><th>Client</th><th>Service</th><th>Date</th><th>Statut</th></tr></thead><tbody>${reqs.map((r) => `<tr class="${r.status === 'nouvelle' ? 'is-new' : ''}"><td>${esc(names[r.client_id])}${BI[r.property_id] ? `<div class="m">${esc(BI[r.property_id].name)}</div>` : ''}</td><td>${esc(r.service)}${r.detail ? `<div class="m">${esc(r.detail)}</div>` : ''}</td><td style="white-space:nowrap">${fmtDate(r.wanted_on)}</td><td><select aria-label="Statut" data-req="${esc(r.id)}">${Object.keys(STATUS).map((s) => `<option value="${s}" ${s === r.status ? 'selected' : ''}>${STATUS[s]}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table></div>` : '<p class="empty">Aucune demande.</p>';
+  } else if (tab === 'biens') {
+    const owners = profiles.filter((p) => p.role === 'client' && p.kind === 'proprietaire');
+    const byOwner = {}; biens.forEach((b) => (byOwner[b.owner_id] ||= []).push(b));
+    const ids = [...new Set([...owners.map((o) => o.id), ...Object.keys(byOwner)])];
+    content = `<p class="who-is" style="margin-bottom:18px">Chaque propriétaire peut avoir plusieurs biens. Il peut aussi les ajouter lui-même depuis son espace.</p>
+      ${ids.length ? ids.map((id) => `<div class="panel owner-biens"><h2>${esc(names[id] || '—')} <small>${(byOwner[id] || []).length} bien${(byOwner[id] || []).length > 1 ? 's' : ''}</small></h2>
+        ${(byOwner[id] || []).length ? `<div class="list">${byOwner[id].map((b) => bienItem(b)).join('')}</div>` : '<p class="empty">Aucun bien enregistré.</p>'}</div>`).join('') : '<p class="empty">Aucun propriétaire pour l’instant. Passez un compte en « Propriétaire » dans l’onglet Comptes.</p>'}
+      ${owners.length ? `<details class="bien-add panel"><summary>Ajouter un bien à un propriétaire</summary>${bienForm({}, owners)}</details>` : ''}`;
   } else if (tab === 'site') {
     content = '<div id="cms-box"></div>';
   } else {
@@ -167,9 +222,9 @@ async function renderGerant() {
       <p class="err" id="inv-err" hidden></p><button class="btn solid" type="submit">Créer le compte et envoyer l’invitation</button></form>
     ${invites.length ? `<h2 style="margin:28px 0 10px">Invitations en attente</h2><div class="list">${invites.map((i) => `<div class="item"><span class="t">${esc(i.full_name || i.email)} · ${i.role === 'gerant' ? 'Gérant' : 'Client'}</span><span class="m">${esc(i.email)} · envoyée le ${fmtTime(i.created_at)}</span><span class="s"><button class="linkbtn" type="button" data-uninv="${esc(i.email)}">Annuler</button></span></div>`).join('')}</div>` : ''}
     <h2 style="margin:28px 0 10px">Tous les comptes</h2><p class="who-is" style="margin-bottom:16px">Complétez ici le séjour ou le bien de chacun, ou changez son rôle.</p>
-    <div class="tbl-wrap"><table class="ptable"><thead><tr><th>Nom</th><th>Type</th><th>Logement</th><th>Du</th><th>Au</th><th>Rôle</th><th></th></tr></thead><tbody>${profiles.map((p) => `<tr data-prof="${esc(p.id)}"><td>${esc(p.full_name || '')}<div class="m">${esc(p.email || '')}${p.phone ? '<br>' + esc(p.phone) : ''}${p.place ? '<br>' + esc(p.place) : ''}</div></td>
+    <div class="tbl-wrap"><table class="ptable"><thead><tr><th>Nom</th><th>Type</th><th>Logement / biens</th><th>Du</th><th>Au</th><th>Rôle</th><th></th></tr></thead><tbody>${profiles.map((p) => `<tr data-prof="${esc(p.id)}"><td>${esc(p.full_name || '')}<div class="m">${esc(p.email || '')}${p.phone ? '<br>' + esc(p.phone) : ''}${p.place ? '<br>' + esc(p.place) : ''}</div></td>
       <td><select data-f="kind"><option value="">—</option><option value="voyageur" ${p.kind === 'voyageur' ? 'selected' : ''}>Voyageur</option><option value="proprietaire" ${p.kind === 'proprietaire' ? 'selected' : ''}>Propriétaire</option></select></td>
-      <td><input data-f="property" value="${esc(p.property || '')}" placeholder="Chalet…" style="width:100%;min-width:140px;padding:6px"></td>
+      <td>${p.kind === 'proprietaire' ? `<button class="linkbtn" type="button" data-tab="biens">${(biens.filter((b) => b.owner_id === p.id)).length} bien(s)</button>` : `<input data-f="property" value="${esc(p.property || '')}" placeholder="Chalet…" style="width:100%;min-width:140px;padding:6px">`}</td>
       <td><input data-f="stay_from" type="date" value="${esc(p.stay_from || '')}" style="padding:6px"></td><td><input data-f="stay_to" type="date" value="${esc(p.stay_to || '')}" style="padding:6px"></td>
       <td><select data-f="role" ${p.id === me.id ? 'disabled' : ''}><option value="client" ${p.role === 'client' ? 'selected' : ''}>Client</option><option value="gerant" ${p.role === 'gerant' ? 'selected' : ''}>Gérant</option></select></td>
       <td><button class="linkbtn" type="button" data-save="${esc(p.id)}">Enregistrer</button></td></tr>`).join('')}</tbody></table></div>`;
@@ -182,6 +237,7 @@ async function renderGerant() {
 
   const cmsBox = $('cms-box');
   if (cmsBox) { const o = { supabase, toast, me, rerender: () => renderSiteEditor(cmsBox, o) }; renderSiteEditor(cmsBox, o); }
+  wireBiens(null);
   $('logout').onclick = logout;
   body.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { st.tab = b.dataset.tab; render(); }));
   body.querySelectorAll('[data-convo]').forEach((b) => (b.onclick = () => { st.convo = b.dataset.convo; render(); }));

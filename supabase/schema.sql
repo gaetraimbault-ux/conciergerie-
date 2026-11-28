@@ -51,6 +51,9 @@ begin
     left(nullif(m->>'property',''), 200),
     d1, d2)
   on conflict (id) do nothing;
+  if coalesce(case when k in ('voyageur','proprietaire') then k end, inv.kind) = 'proprietaire' and nullif(m->>'property','') is not null then
+    insert into public.properties (owner_id, name, place) values (new.id, left(m->>'property', 200), left(nullif(m->>'place',''), 100));
+  end if;
   delete from public.invites where email = lower(new.email);
   return new;
 end $$;
@@ -114,6 +117,25 @@ create table if not exists public.site_content (
   updated_at timestamptz not null default now()
 );
 
+-- 6. Biens des propriétaires : un propriétaire peut en avoir plusieurs
+create table if not exists public.properties (
+  id bigint generated always as identity primary key,
+  owner_id uuid not null references public.profiles(id) on delete cascade,
+  name text not null check (length(name) between 1 and 200),
+  place text check (length(place) <= 100),
+  address text check (length(address) <= 300),
+  notes text check (length(notes) <= 2000),
+  created_at timestamptz not null default now()
+);
+create index if not exists properties_owner_idx on public.properties (owner_id);
+-- Une demande peut viser un bien précis
+alter table public.requests add column if not exists property_id bigint references public.properties(id) on delete set null;
+-- Reprise des biens déjà saisis dans la fiche des propriétaires (une seule fois)
+insert into public.properties (owner_id, name, place)
+  select p.id, left(p.property, 200), left(p.place, 100) from public.profiles p
+  where p.kind = 'proprietaire' and coalesce(p.property, '') <> ''
+    and not exists (select 1 from public.properties x where x.owner_id = p.id);
+
 -- Sécurité : chaque table est fermée par défaut, puis ouverte règle par règle
 alter table public.profiles enable row level security;
 alter table public.messages enable row level security;
@@ -122,6 +144,7 @@ alter table public.requests enable row level security;
 alter table public.leads enable row level security;
 alter table public.invites enable row level security;
 alter table public.site_content enable row level security;
+alter table public.properties enable row level security;
 
 -- Profils : chacun voit le sien, les gérants voient et modifient tout
 drop policy if exists "profil lu" on public.profiles;
@@ -147,7 +170,19 @@ create policy "lectures perso" on public.message_reads for all using (user_id = 
 drop policy if exists "demandes lues" on public.requests;
 create policy "demandes lues" on public.requests for select using (client_id = auth.uid() or public.is_gerant());
 drop policy if exists "demandes créées" on public.requests;
-create policy "demandes créées" on public.requests for insert with check (client_id = auth.uid() or public.is_gerant());
+create policy "demandes créées" on public.requests for insert with check (
+  (client_id = auth.uid() or public.is_gerant())
+  and (property_id is null or exists (select 1 from public.properties x where x.id = property_id and x.owner_id = client_id)));
+
+-- Biens : le propriétaire gère les siens, les gérants gèrent tout
+drop policy if exists "biens lus" on public.properties;
+create policy "biens lus" on public.properties for select using (owner_id = auth.uid() or public.is_gerant());
+drop policy if exists "biens ajoutés" on public.properties;
+create policy "biens ajoutés" on public.properties for insert with check (owner_id = auth.uid() or public.is_gerant());
+drop policy if exists "biens modifiés" on public.properties;
+create policy "biens modifiés" on public.properties for update using (owner_id = auth.uid() or public.is_gerant()) with check (owner_id = auth.uid() or public.is_gerant());
+drop policy if exists "biens retirés" on public.properties;
+create policy "biens retirés" on public.properties for delete using (owner_id = auth.uid() or public.is_gerant());
 drop policy if exists "demandes suivies" on public.requests;
 create policy "demandes suivies" on public.requests for update using (public.is_gerant());
 
@@ -189,8 +224,9 @@ grant select, insert, update on public.leads to authenticated;
 grant select, insert, update, delete on public.invites to authenticated;
 grant select on public.site_content to anon;
 grant select, insert, update, delete on public.site_content to authenticated;
+grant select, insert, update, delete on public.properties to authenticated;
 grant usage on all sequences in schema public to anon, authenticated;
 grant execute on function public.is_gerant() to anon, authenticated;
 
--- 6. Donner le rôle gérant (à lancer après ta première connexion, avec ton adresse) :
+-- 7. Donner le rôle gérant (à lancer après ta première connexion, avec ton adresse) :
 -- update public.profiles set role = 'gerant' where email = 'ton-adresse@exemple.fr';
